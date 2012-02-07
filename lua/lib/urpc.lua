@@ -1,4 +1,23 @@
 
+urpc={}
+urpc.online = { "alpha", "beta" }
+urpc.offline = { "gamma" }
+
+
+function urpc_online()
+	for i,k in ipairs(urpc.online) do
+	echon("["..i.."] "..k);
+	end
+ 	echon(count(urpc.online).." uRPC nodes currently online");
+end
+
+function urpc_offline()
+	for i,k in ipairs(urpc.offline) do
+	echon("["..i.."] "..k);
+	end
+	echon(urpc.online.." uRPC nodes currently online");
+end
+
 function urpc_connect(node)
   echon("uRPC: Connecting node: "..node[1]);
   if (node[2] == "uart" ) then

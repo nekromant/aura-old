@@ -14,13 +14,14 @@ AC_PROG_CC
 
 # Checks for header files.
 AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h sys/socket.h unistd.h])
+AC_CHECK_HEADERS([termios.h])
 PKG_CHECK_MODULES([lua], [lua >= 5.1])
 
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
 AC_FUNC_ERROR_AT_LINE
-AC_CHECK_FUNCS([bzero socket])
+AC_CHECK_FUNCS([bzero socket strchr])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])

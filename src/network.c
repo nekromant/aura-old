@@ -175,7 +175,7 @@ int network_init(lua_State* l, char* host, int portno)
 		//Send telnet init
  		buff = "hook_login();\n";
         newio = fdopen(newsockfd, "w+");
-        fprintf(newio,telnet_initstr);
+        //fprintf(newio,telnet_initstr);
         fprintf(newio,"Press ENTER to enter interactive shell\n\r");
         hackio(l,newio,newio,newio);
         fgets(tmp,5,newio);

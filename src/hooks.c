@@ -4,6 +4,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include <string.h>
+#include <termios.h>
 #include "include/azra.h"
 
 static struct azra_hook* base;

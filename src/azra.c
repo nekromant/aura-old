@@ -3,10 +3,10 @@
 #include <stdio.h>
 
 
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+#include <termios.h>
 
 #include <string.h>
 #include "include/azra.h"
@@ -85,8 +85,8 @@ char **argv;
         fprintf(stderr, "%s\n", lua_tostring(l, -1));
         lua_pop(l, 1);
     }
-
-//     strcpy(buff,"\n");
+    //TODO: Argument parsing
+    //Lua scripts directory
     network_init(l,"0.0.0.0",8888);
 	return 0;
 

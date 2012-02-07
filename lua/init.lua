@@ -1,3 +1,19 @@
+
+require "lfs"
+  
+function check_lib(path,lib)
+	local lua = path..'/'..lib..".lua"
+	local luac = path..'/'..lib..".luac"
+	local attr = lfs.attributes (lua)
+	local attrc = lfs.attributes (luac)
+	assert (type(attr) == "table")
+	if type(attrc) ~= "table" or attr.change>attrc.change then
+		echon("azra: compiling library "..path.."/"..lib.."...");	
+ 		return os.execute("luac -o "..path.."/"..lib..".luac "..path.."/"..lib..".lua")
+		end
+	return 0
+end
+
 config = {}
 
 print("azra: Starting environment"); 
@@ -12,28 +28,42 @@ function echon(...)
 end
 
 
-
 function runfile(file)
-  echon("Loading: "..file);
+  echon("azra: loading: "..file);
   dofile(file);
 end
 
 function libload(file)
-  runfile("lua/lib/"..file..".lua");
+	if (config.bytecompile) then
+		local r = check_lib("lua/lib",file)
+		if (0~=r) then
+			echon("azra: byte-compile failed, trying regular runfile");
+			runfile("lua/lib/"..file..".lua")
+		else
+		runfile("lua/lib/"..file..".luac")
+		end
+	else
+		runfile("lua/lib/"..file..".lua")	
+	end
 end
 
 -- Gets called each time a client connects
 function hook_login()
+	libload_batch(config.libraries_interactive);
 	echon("Run help(); to get help. -- Cpt. Obvious");
 end
+
+function libload_batch(libs)
+	for i,v in ipairs(libs) do
+	libload(v);
+	end
+end
+
 
 function azra_reconf()
   config = {}
   runfile(azra_getconf());
-  for i,v in ipairs(config.libraries) do
-  libload(v);
-  end
-  echon("Reconfiguration complete");
+  echon("azra: configuration complete");
 end
 
 
@@ -51,5 +81,5 @@ function azra_memusage()
 end
 
 azra_reconf();
-
+libload_batch(config.libraries);
 print("azra: environment ready"); 
