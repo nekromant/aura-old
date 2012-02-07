@@ -2,9 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <termios.h>
+#include <unistd.h>
 #include <netinet/in.h>
+#include <sys/cdefs.h>
+#include <stdio.h>
+#include "lua.h"
+#include "lauxlib.h"
+#include <string.h>
 
 /* IO hack. This replaces the io library's idea of stdin/out/err
  * with 3 new FILE* handles, without altering the C stdin/out/err
@@ -48,34 +55,159 @@ void error(const char *msg)
 }
 
 
+
+
+
+void dump_table(lua_State *L)
+{
+	printf("!\n");
+    lua_pushnil(L);
+    while(lua_next(L, -2) != 0)
+    {
+        if(lua_isstring(L, -1))
+          printf("%s = %s\n", lua_tostring(L, -2), lua_tostring(L, -1));
+        else if(lua_isnumber(L, -1))
+          printf("%s = %d\n", lua_tostring(L, -2), (int) lua_tonumber(L, -1));
+        else if(lua_istable(L, -1))
+          dump_table(L);
+
+        lua_pop(L, 1);
+    }
+}
+
+#define H_SZ	20
+static char cmd_history[4096][H_SZ];
+static int history_pos=0;
+
+
+#define history_next history_pos+=1;\
+	if (history_pos==H_SZ) history_pos=0;
+#define history_prev  history_pos-=1;\
+	if (history_pos==0) history_pos=H_SZ-1;
+
+
+#define handle_ctrl(char,code) case char: \
+	buff = \
+	
+
+// static char* return_code(FILE* io, char* code)
+// {
+// 	char* buff = cmd_history[history_pos];
+// 	strcpy(buff, code);
+// 	fprintf(io,"\r%s\r\n",code);
+// 	history_next
+// 	return buff;
+// };
+
+static char * smart_fgets(FILE* nio)
+{
+	char* tmp;
+
+	printf("\n");
+	history_next
+	char* buff = &cmd_history[history_pos][0];
+	tmp = fgets(buff , 4096,nio);
+		
+	  if (tmp == NULL) {
+		printf("Client disconnected, didn't expect it.");
+		sleep(1);
+		return "-- logout";	
+	};
+#if 0
+	int i;
+	for (i=0;i<strlen(buff);i++)
+		printf("%hhx ", buff[i]);
+#endif		
+	if (strchr(buff,0x18))
+			buff = "azra_reconf();";
+	if (strchr(buff,0xfd))
+			buff = "-- logout";
+    printf("==> %s\n",buff);
+	return buff;
+}
+
+
 static int sockfd, newsockfd;
 static socklen_t clilen;
 static struct sockaddr_in serv_addr, cli_addr;
-FILE* newio;
-int network_init(char* host, int portno, lua_State* L)
+
+//Init telnet
+//\377\373\001\377\375\042
+static const char telnet_initstr[] = "\n";
+
+#define is_cmd(cmd) (strncmp(cmd, buff, strlen(cmd))==0)
+int network_init(lua_State* l, char* host, int portno)
 {
-	 char tmp[4096];
-	 sockfd = socket(AF_INET, SOCK_STREAM, 0);
-     if (sockfd < 0) 
+	printf("Listening at %s:%d\n", host, portno);
+    char *buff;
+    int err;
+    char tmp[5];
+	int i=0;
+	FILE* newio;
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
         error("ERROR opening socket");
-     bzero((char *) &serv_addr, sizeof(serv_addr));
-     serv_addr.sin_family = AF_INET;
-     serv_addr.sin_addr.s_addr = INADDR_ANY;
-     serv_addr.sin_port = htons(portno);
-     if (bind(sockfd, (struct sockaddr *) &serv_addr,
-              sizeof(serv_addr)) < 0) 
-              error("ERROR on binding");
-     listen(sockfd,5);
-     clilen = sizeof(cli_addr);
-	 while(1)
-	 {
-		newsockfd = accept(sockfd, 
-                 (struct sockaddr *) &cli_addr, 
-                 &clilen);
-		if (newsockfd < 0) 
-          error("ERROR on accept");
-        bzero(tmp,256); 
-        newio = fdopen(newsockfd, "r+");
-        hackio(L,newio,newio,newio); 
-	 }
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+	i=5;
+	while (i--)
+	{
+		printf("Using port %d\n",portno);
+		serv_addr.sin_port = htons(portno);
+		err = bind(sockfd, (struct sockaddr *) &serv_addr,
+             sizeof(serv_addr));
+		if (0 == err) break;
+        perror("ERROR on binding ");
+        portno++;
+	}
+	if (err!=0) return err;
+	listen(sockfd,5);
+// 	setsockopt(
+    clilen = sizeof(cli_addr);
+    while(1)
+    {
+        newsockfd = accept(sockfd,
+                           (struct sockaddr *) &cli_addr,
+                           &clilen);
+        if (newsockfd < 0)
+            error("ERROR on accept");
+		//Send telnet init
+ 		buff = "hook_login();\n";
+        newio = fdopen(newsockfd, "w+");
+        fprintf(newio,telnet_initstr);
+        fprintf(newio,"Press ENTER to enter interactive shell\n\r");
+        hackio(l,newio,newio,newio);
+        fgets(tmp,5,newio);
+        fprintf(newio,"\rAzra interactive shell (c) Necromant 2012\n\r");
+		do {
+			if (is_cmd("-- logout")) {
+				fprintf(newio,"-- Logged out\n\r");
+				fclose(newio);
+				close(newsockfd);
+				break;
+			}else if (is_cmd("-- shutdown")) 
+			{
+				fprintf(newio,"-- Shutting down azra daemon\n\r");
+				fclose(newio);
+				close(newsockfd);
+				close(sockfd);
+				return 0; 
+			}else if (is_cmd("-- reset")) 
+			{
+				fprintf(newio,"-- Hard resetting the environment\n\r");
+				fprintf(newio,"-- FIXME: actual hardreset goes here\n\r");
+				
+			}
+            err = luaL_loadbuffer(l, buff, strlen(buff), "line") ||
+                    lua_pcall(l, 0, 0, 0);
+            if (err) {
+                fprintf(newio, "%s\n\r", lua_tostring(l, -1));
+                lua_pop(l, 1);
+            }
+            fprintf(newio,"azra# ");
+            fflush(stdout);
+            buff = smart_fgets(newio);
+        } while (buff);
+    }
 }

@@ -13,7 +13,7 @@ static struct azra_hook* end;
 static int azra_help(lua_State *L)
 {
   struct azra_hook* h = base;
-  int i;
+  int i=0;
   do 
   {
     lua_pushfstring(L, "%s - %s", h->name, h->help);
