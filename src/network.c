@@ -6,12 +6,16 @@
 #include <sys/socket.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/epoll.h>
 #include <sys/cdefs.h>
 #include <stdio.h>
-#include "lua.h"
-#include "lauxlib.h"
+#include <lua.h>
+#include <lauxlib.h>
 #include <string.h>
+#include "include/azra.h"
 
 /* IO hack. This replaces the io library's idea of stdin/out/err
  * with 3 new FILE* handles, without altering the C stdin/out/err
@@ -55,7 +59,79 @@ void error(const char *msg)
 }
 
 
+static int handle_server_io(struct epoll_event *ev)
+{
+	struct azra_epoll_hook *shook = (struct azra_epoll_hook*) ev->data.ptr;
+// 	struct azra_server_data *sdata = shook->data;
+	printf("azra: accepting connection to '%s'\n", shook->name);
+ 	struct azra_epoll_hook *sh = malloc(sizeof(struct azra_epoll_hook));
+	struct azra_client_data *cdata = malloc(sizeof(struct azra_client_data));
+	cdata->clilen = sizeof(struct sockaddr_in);
+ 	sh->fd = accept(shook->fd, (struct sockaddr *) &cdata->cli_addr, &cdata->clilen);
+ 	if (sh->fd < 0)
+	{
+		perror("azra: Failed to accept incoming connection\n");
+		goto accept_fail;
+	}
+	char *ip = inet_ntoa(cdata->cli_addr.sin_addr);
+	char* name = malloc(128);
+	sprintf(name,"client:%s:%hu",ip,cdata->cli_addr.sin_port);
+	sh->name = name;
+	sh->data = cdata;
+	return azra_setup_client(sh);
+    //TODO: Proper error handling
+    //
+	accept_fail:
+		free(sh);
+		return 1;
+}
 
+// static struct azra_epoll_hook shook = 
+// {
+// 	.name = "server",
+// 	.io_handler = handle_server_io,
+// 	.ev.events = EPOLLIN
+// };
+
+int azra_server_init(lua_State *L, char *host, int portno)
+{
+	int i,err;
+	struct azra_epoll_hook *shook = malloc(sizeof(struct azra_epoll_hook));
+	struct azra_server_data *sdata = malloc(sizeof(struct azra_server_data));
+	char* name = malloc(128);
+	sprintf(name,"server %s:%d",host,portno);
+	shook->name = name;
+	shook->io_handler = handle_server_io;
+	shook->ev.events = EPOLLIN;
+	if ((!sdata) || (!shook))
+	{
+		printf("Out of memory!\n");
+	}
+	shook->fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (shook->fd < 0)
+        error("ERROR opening socket");
+    bzero((char *) &sdata->serv_addr, sizeof(struct sockaddr_in));
+    sdata->serv_addr.sin_family = AF_INET;
+    sdata->serv_addr.sin_addr.s_addr = INADDR_ANY;
+    shook->data=sdata;
+	i=5;
+	while (i--)
+	{
+		printf("azra: using port %d\n",portno);
+		sdata->serv_addr.sin_port = htons(portno);
+		err = bind(shook->fd, (struct sockaddr *) &sdata->serv_addr,
+             sizeof(struct sockaddr));
+		if (0 == err) break;
+        perror("ERROR on binding ");
+        portno++;
+	}
+	//TODO: Proper error handling and memory mgr
+	if (err!=0) return err;
+	listen(shook->fd,5);
+	azra_make_fd_nonblock(shook->fd);
+    azra_add_epollhook(shook);
+    return 0;
+}
 
 
 void dump_table(lua_State *L)

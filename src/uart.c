@@ -11,6 +11,8 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #include <errno.h>
 #include <string.h>
+#include <sys/epoll.h>
+#include <netinet/in.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>

@@ -62,6 +62,7 @@ end
 
 function azra_reconf()
   config = {}
+  config.urpc = {}
   runfile(azra_getconf());
   echon("azra: configuration complete");
 end

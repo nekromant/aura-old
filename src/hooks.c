@@ -5,6 +5,9 @@
 #include "lauxlib.h"
 #include <string.h>
 #include <termios.h>
+#include <sys/epoll.h>
+#include <netinet/in.h>
+#include <sys/cdefs.h>
 #include "include/azra.h"
 
 static struct azra_hook* base;

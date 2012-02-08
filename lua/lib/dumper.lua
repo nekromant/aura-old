@@ -230,6 +230,6 @@ function DataDumper(value, varname, fastmode, ident)
 end
 
 function dump(...)
-  print(DataDumper(...), "\n---")
+  echo(DataDumper(...), "\n---\n")
 end
 

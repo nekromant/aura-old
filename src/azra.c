@@ -1,7 +1,9 @@
 #include <sys/cdefs.h>
 
 #include <stdio.h>
-
+#include <sys/epoll.h>
+#include <netinet/in.h>
+#include <sys/cdefs.h>
 
 #include <lua.h>
 #include <lualib.h>
@@ -87,7 +89,9 @@ char **argv;
     }
     //TODO: Argument parsing
     //Lua scripts directory
-    network_init(l,"0.0.0.0",8888);
+	azra_init_loop();
+	azra_server_init(l,"0.0.0.0",8888);
+	azra_main_loop();
 	return 0;
 
 }
