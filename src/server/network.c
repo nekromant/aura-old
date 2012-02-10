@@ -240,7 +240,6 @@ int network_init(lua_State* l, char* host, int portno)
 	}
 	if (err!=0) return err;
 	listen(sockfd,5);
-// 	setsockopt(
     clilen = sizeof(cli_addr);
     while(1)
     {
@@ -274,7 +273,6 @@ int network_init(lua_State* l, char* host, int portno)
 			{
 				fprintf(newio,"-- Hard resetting the environment\n\r");
 				fprintf(newio,"-- FIXME: actual hardreset goes here\n\r");
-				
 			}
             err = luaL_loadbuffer(l, buff, strlen(buff), "line") ||
                     lua_pcall(l, 0, 0, 0);

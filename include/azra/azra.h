@@ -42,6 +42,14 @@ struct azra_server_data
 };
 
 #define AZRA_CLIBUF_SZ	4096
+struct azra_charbuf
+{
+	int refcnt;
+	int pos;
+	int len;
+	char* buffer;
+};
+
 struct azra_client_data
 {
 	socklen_t clilen;
