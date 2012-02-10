@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
@@ -18,7 +19,7 @@
 #include <sys/epoll.h>
 #include <netinet/in.h>
 
-#include "include/azra.h"
+#include <azra/azra.h>
 
 
 static int efd;
@@ -69,6 +70,19 @@ int azra_add_epollhook(struct azra_epoll_hook* hook)
    }
    printf("azra: added hook '%s' to main loop\n", hook->name);
    return 0;
+}
+
+
+void azra_drop_epollhook(struct azra_epoll_hook* hook)
+{
+	hook->ev.data.ptr = (void*) hook;
+	printf("azra: dropping epoll hook: %s\n", hook->name);
+    if (epoll_ctl(efd, EPOLL_CTL_DEL, hook->fd, &hook->ev)!=0)
+    {
+     fprintf(stderr, "BAD!!! Failed to drop a epollhook for fd %d.\n", hook->fd);
+     perror("epoll:");
+    }
+    close(hook->fd);
 }
 
 int azra_main_loop()

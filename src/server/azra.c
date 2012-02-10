@@ -11,7 +11,7 @@
 #include <termios.h>
 
 #include <string.h>
-#include "include/azra.h"
+#include <azra/azra.h>
 
 
 /* TODO: Set config from cmd line */

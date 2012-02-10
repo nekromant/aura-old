@@ -15,7 +15,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <string.h>
-#include "include/azra.h"
+#include <azra/azra.h>
 
 /* IO hack. This replaces the io library's idea of stdin/out/err
  * with 3 new FILE* handles, without altering the C stdin/out/err
@@ -78,6 +78,7 @@ static int handle_server_io(struct epoll_event *ev)
 	sprintf(name,"client:%s:%hu",ip,cdata->cli_addr.sin_port);
 	sh->name = name;
 	sh->data = cdata;
+	cdata->inbpos=0;
 	return azra_setup_client(sh);
     //TODO: Proper error handling
     //

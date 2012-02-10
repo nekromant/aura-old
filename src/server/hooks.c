@@ -8,7 +8,7 @@
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <sys/cdefs.h>
-#include "include/azra.h"
+#include <azra/azra.h>
 
 static struct azra_hook* base;
 static struct azra_hook* end;

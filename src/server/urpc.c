@@ -17,5 +17,5 @@
 #include <lauxlib.h>
 #include <termios.h>
 
-#include "include/azra.h"
+#include <azra/azra.h>
 

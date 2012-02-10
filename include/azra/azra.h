@@ -41,16 +41,18 @@ struct azra_server_data
 	struct sockaddr_in serv_addr;
 };
 
+#define AZRA_CLIBUF_SZ	4096
 struct azra_client_data
 {
-	char* name;
-	FILE* io;
 	socklen_t clilen;
+	char inbuf[AZRA_CLIBUF_SZ]; //input buffer
+	int inbpos;
 	struct sockaddr_in cli_addr;
 };
 
 int azra_init_loop();
 int azra_add_epollhook(struct azra_epoll_hook* hook);
+void azra_drop_epollhook(struct azra_epoll_hook* hook);
 int azra_main_loop();
 int azra_make_fd_nonblock(int sfd);
 int azra_setup_client(struct azra_epoll_hook* h);
