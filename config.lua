@@ -19,3 +19,4 @@ config = {
     stop_on_error=false 
   } 
 }
+testv="test";

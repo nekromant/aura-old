@@ -26,6 +26,7 @@
  * versions...
  */
 static void hackio(lua_State *L, FILE *in, FILE *out, FILE *err) {
+	printf("azra: Hi-jacking lua io streams...\n");
     FILE **pf;
     lua_getglobal(L, "io"); /* Get the IO library */
     lua_pushstring(L, "open");
@@ -62,10 +63,10 @@ void error(const char *msg)
 static int handle_server_io(struct epoll_event *ev)
 {
 	struct azra_epoll_hook *shook = (struct azra_epoll_hook*) ev->data.ptr;
-// 	struct azra_server_data *sdata = shook->data;
+ 	struct azra_server_data *sdata = shook->data;
 	printf("azra: accepting connection to '%s'\n", shook->name);
  	struct azra_epoll_hook *sh = malloc(sizeof(struct azra_epoll_hook));
-	struct azra_client_data *cdata = malloc(sizeof(struct azra_client_data));
+	struct azra_client_data *cdata = calloc(1,sizeof(struct azra_client_data));
 	cdata->clilen = sizeof(struct sockaddr_in);
  	sh->fd = accept(shook->fd, (struct sockaddr *) &cdata->cli_addr, &cdata->clilen);
  	if (sh->fd < 0)
@@ -76,9 +77,12 @@ static int handle_server_io(struct epoll_event *ev)
 	char *ip = inet_ntoa(cdata->cli_addr.sin_addr);
 	char* name = malloc(128);
 	sprintf(name,"client:%s:%hu",ip,cdata->cli_addr.sin_port);
+	sdata->client_count++;
+	cdata->server = sdata;
 	sh->name = name;
 	sh->data = cdata;
-	cdata->inbpos=0;
+	cdata->h = sh;
+	
 	return azra_setup_client(sh);
     //TODO: Proper error handling
     //
@@ -87,12 +91,7 @@ static int handle_server_io(struct epoll_event *ev)
 		return 1;
 }
 
-// static struct azra_epoll_hook shook = 
-// {
-// 	.name = "server",
-// 	.io_handler = handle_server_io,
-// 	.ev.events = EPOLLIN
-// };
+
 
 int azra_server_init(lua_State *L, char *host, int portno)
 {
@@ -102,6 +101,7 @@ int azra_server_init(lua_State *L, char *host, int portno)
 	char* name = malloc(128);
 	sprintf(name,"server %s:%d",host,portno);
 	shook->name = name;
+	sdata->client_count=0;
 	shook->io_handler = handle_server_io;
 	shook->ev.events = EPOLLIN;
 	if ((!sdata) || (!shook))
@@ -115,6 +115,7 @@ int azra_server_init(lua_State *L, char *host, int portno)
     sdata->serv_addr.sin_family = AF_INET;
     sdata->serv_addr.sin_addr.s_addr = INADDR_ANY;
     shook->data=sdata;
+    sdata->L=L;
 	i=5;
 	while (i--)
 	{
@@ -131,6 +132,9 @@ int azra_server_init(lua_State *L, char *host, int portno)
 	listen(shook->fd,5);
 	azra_make_fd_nonblock(shook->fd);
     azra_add_epollhook(shook);
+	//TODO: Move this. Somewhere
+	sdata->lua_stream = open_memstream (&sdata->lua_iodata, &sdata->lua_streamsz);
+	hackio(L,sdata->lua_stream,sdata->lua_stream,sdata->lua_stream);
     return 0;
 }
 

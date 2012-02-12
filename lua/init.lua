@@ -8,7 +8,7 @@ function check_lib(path,lib)
 	local attrc = lfs.attributes (luac)
 	assert (type(attr) == "table")
 	if type(attrc) ~= "table" or attr.change>attrc.change then
-		echon("azra: compiling library "..path.."/"..lib.."...");	
+		echon("compiling library "..path.."/"..lib.."...");	
  		return os.execute("luac -o "..path.."/"..lib..".luac "..path.."/"..lib..".lua")
 		end
 	return 0
@@ -29,7 +29,7 @@ end
 
 
 function runfile(file)
-  echon("azra: loading: "..file);
+  echon("loading: "..file);
   dofile(file);
 end
 
@@ -37,7 +37,7 @@ function libload(file)
 	if (config.bytecompile) then
 		local r = check_lib("lua/lib",file)
 		if (0~=r) then
-			echon("azra: byte-compile failed, trying regular runfile");
+			echon("byte-compile failed, trying regular runfile");
 			runfile("lua/lib/"..file..".lua")
 		else
 		runfile("lua/lib/"..file..".luac")
@@ -64,7 +64,7 @@ function azra_reconf()
   config = {}
   config.urpc = {}
   runfile(azra_getconf());
-  echon("azra: configuration complete");
+  echon("configuration complete");
 end
 
 
@@ -78,9 +78,9 @@ end
 
 function azra_memusage()
   after = collectgarbage("count");
-  echon("azra: Memory usage: "..after.."K");
+  echon("Memory usage: "..after.."K");
 end
 
 azra_reconf();
 libload_batch(config.libraries);
-print("azra: environment ready"); 
+print("environment ready"); 

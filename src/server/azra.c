@@ -17,6 +17,7 @@
 /* TODO: Set config from cmd line */
 int Lgetconf(lua_State* L)
 {
+	printf("!!!\n");
     lua_pushstring(L,"config.lua");
     return 1;
 }
@@ -89,6 +90,7 @@ char **argv;
     }
     //TODO: Argument parsing
     //Lua scripts directory
+    azra_broadcaster_init(stdout);
 	azra_init_loop();
 	azra_server_init(l,"0.0.0.0",8888);
 	azra_main_loop();

@@ -24,6 +24,7 @@ PKG_CHECK_MODULES([lua], [lua >= 5.1])
 AC_FUNC_ERROR_AT_LINE
 AC_CHECK_FUNCS([bzero socket strchr])
 
+
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/server/Makefile

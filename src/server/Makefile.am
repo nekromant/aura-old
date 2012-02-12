@@ -4,7 +4,8 @@ azra_SOURCES = hooks.c \
 	network.c \
 	uart.c \
 	main_loop.c \
-	netcmdio.c
+	netcmdio.c \
+	broadcast.c
 AM_CFLAGS = $(lua_CFLAGS) -Wall -Werror -I$(top_srcdir)/include
 azra_LDADD = $(lua_LIBS)
 

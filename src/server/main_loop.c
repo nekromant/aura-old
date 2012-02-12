@@ -58,6 +58,21 @@ int azra_make_fd_nonblock(int sfd)
   return 0;
 }
 
+int azra_epollout(struct azra_epoll_hook* hook, int status)
+{
+	if (status)
+		hook->ev.events|=EPOLLOUT;
+	else
+		hook->ev.events&=~EPOLLOUT;
+	if (epoll_ctl(efd, EPOLL_CTL_MOD, hook->fd, &hook->ev)!=0)
+    {
+	 fprintf(stderr, "Failed to add fd to epoll (%d)\n", hook->fd);
+     perror("epoll:");
+     return 1;
+	}
+	return 0;
+}
+
 int azra_add_epollhook(struct azra_epoll_hook* hook)
 {
    hook->ev.data.ptr = (void*) hook;
@@ -93,7 +108,7 @@ int azra_main_loop()
 	printf("azra: entering main loop\n");
 	while(1)
 	{
-		c = epoll_wait(efd, &ev, 1, 0);
+		c = epoll_wait(efd, &ev, 1, 2000);
 		if (c) {
 			hook = ev.data.ptr;
 			printf("azra: event from %s \n", hook->name);
