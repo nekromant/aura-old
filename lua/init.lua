@@ -24,7 +24,7 @@ function echo(...)
 end
 
 function echon(...)
-	io.stdout:write(....."\n\r");
+	echo(....."\n");
 end
 
 
@@ -49,8 +49,11 @@ end
 
 -- Gets called each time a client connects
 function hook_login()
+echon("Run help(); to get help. -- Cpt. Obvious");
+end
+-- Gets called when first client connects
+function hook_first_login()
 	libload_batch(config.libraries_interactive);
-	echon("Run help(); to get help. -- Cpt. Obvious");
 end
 
 function libload_batch(libs)
@@ -72,7 +75,7 @@ function azra_gc()
   before = collectgarbage("count");
   collectgarbage();
   after = collectgarbage("count");
-  echon("azra: Collecting garbage: "..before.."K -> "..after.."K");
+  echon("Collecting garbage: "..before.."K -> "..after.."K");
   --TODO: Call C function to clean up things
 end
 

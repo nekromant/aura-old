@@ -8,6 +8,7 @@ struct azra_hook
   lua_CFunction func;
   char* name;
   char* help;
+  char* args;
   void* next;
 };
 
@@ -47,6 +48,7 @@ struct azra_server_data
 	int client_count;
 	FILE* lua_stream;
 	struct sockaddr_in serv_addr;
+	int firstlogin;
 };
 
 #define AZRA_CLIBUF_SZ	4096
@@ -86,7 +88,7 @@ void _azra_broadcastf(struct azra_client_data* cli, const char* fmt, ...);
 	_azra_broadcastf(cli, "<b>%s</b>: " fmt, cli->h->name, ##__VA_ARGS__)
 
 #define azra_cbroadcastf(fmt,...) \
-	_azra_broadcastf(NULL, "<b>azra</b>:" fmt, ##__VA_ARGS__)
+	_azra_broadcastf(NULL, "<b>azra</b>: " fmt, ##__VA_ARGS__)
 	
 void azra_broadcaster_add_client(struct azra_client_data* cli);
 int azra_broadcaster_init(FILE* log);
@@ -97,5 +99,6 @@ list_del(&cli->bclist);
 void azra_charbuf_put(struct azra_charbuf* ptr);
 void broadcaster_put_message(struct azra_client_data* cdata, 
 	struct azra_charbuf* msg);
+int azra_protector_init(lua_State *L);
 
 #endif

@@ -92,6 +92,7 @@ char **argv;
     //Lua scripts directory
     azra_broadcaster_init(stdout);
 	azra_init_loop();
+	azra_protector_init(l);
 	azra_server_init(l,"0.0.0.0",8888);
 	azra_main_loop();
 	return 0;

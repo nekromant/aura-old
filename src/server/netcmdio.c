@@ -60,7 +60,7 @@ static int azra_execute_buffer(struct azra_epoll_hook* h)
             //printf("az");
             fflush(cdata->server->lua_stream);
 			if (cdata->server->lua_streamsz)
-            azra_cbroadcastf(" %s\n", cdata->server->lua_iodata);
+				azra_cbroadcastf(" %s\n", cdata->server->lua_iodata);
             rewind(cdata->server->lua_stream);
             
 	return 0;
@@ -160,6 +160,8 @@ char* azra_shell_exec(char* cmd,int sz) {
 
 const char welcomestr[] = "<b>azra:</b> Welcome <font color=red>" PACKAGE_STRING "</font>! Send bugs to <font color=green>" PACKAGE_BUGREPORT "</font>\nCurrently running at: <font color=blue>";
 const char userstr[] = "You are client number <b>%d</b>\n";
+const char loginhook[] = "hook_login()";
+const char floginhook[] = "hook_first_login()";
 
 int azra_setup_client(struct azra_epoll_hook* h)
 {
@@ -175,6 +177,11 @@ int azra_setup_client(struct azra_epoll_hook* h)
 	write(h->fd,uname,strlen(uname));
 	azra_broadcaster_add_client(cdata);
 	free(uname); 
+	if (!cdata->server->firstlogin++)
+		strcpy(cdata->inbuf,floginhook);
+	azra_execute_buffer(h);
+	strcpy(cdata->inbuf,loginhook);
+	azra_execute_buffer(h);	
     //TODO: Add client to broadcast list
     return  azra_add_epollhook(h);
 }

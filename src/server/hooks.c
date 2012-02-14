@@ -20,7 +20,7 @@ static int azra_help(lua_State *L)
   int i=0;
   do 
   {
-    lua_pushfstring(L, "%s - %s", h->name, h->help);
+    lua_pushfstring(L, "%s%s - %s", h->name, h->args, h->help);
     h=h->next;
     i++;
   } while (h);

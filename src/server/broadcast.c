@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +39,7 @@ void azra_broadcaster_add_client(struct azra_client_data* cli)
 
 
 
-
+#if 0
 static char *make_message(const char *fmt, va_list ap) {
     int n, size = 100;
     char *p;
@@ -56,7 +58,7 @@ static char *make_message(const char *fmt, va_list ap) {
             return NULL;
     }
 }
-
+#endif
 
 struct azra_charbuf *azra_allocate_charbuf(char* msg)
 {
@@ -134,9 +136,10 @@ void _azra_broadcastf(struct azra_client_data* cli, const char* fmt, ...)
 	va_list ap;
 	va_start(ap,fmt);
 	
-	char* from = "azra:";
+	char* from = "azra";
 	if (cli) from = cli->h->name;
-	char* msg = make_message(fmt,ap);
+	char* msg;
+	vasprintf(&msg, fmt, ap);
 	fprintf(io, "%s: %s\n", from, msg);
 	struct azra_charbuf *buf = azra_allocate_charbuf(msg);
 	buf->buffer=msg;
