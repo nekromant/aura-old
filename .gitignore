@@ -1,0 +1,12 @@
+*~
+*.orig
+Makefile
+Makefile.in
+config.h
+config.h.in
+*.luac
+*.Po
+.deps
+*.o
+*.log
+*.cache
