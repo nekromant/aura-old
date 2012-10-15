@@ -1,6 +1,21 @@
-
 require "lfs"
-  
+
+print("azra: Warming up lua environment"); 
+
+function azra_gc()
+  before = collectgarbage("count");
+  collectgarbage();
+  after = collectgarbage("count");
+  echon("Collecting garbage: "..before.."K -> "..after.."K");
+  --TODO: Call C function to clean up things
+end
+
+function azra_memusage()
+  after = collectgarbage("count");
+  echon("Memory usage: "..after.."K");
+end
+
+-- Library byte-compiling routines  
 function check_lib(path,lib)
 	local lua = path..'/'..lib..".lua"
 	local luac = path..'/'..lib..".luac"
@@ -12,25 +27,6 @@ function check_lib(path,lib)
  		return os.execute("luac -o "..path.."/"..lib..".luac "..path.."/"..lib..".lua")
 		end
 	return 0
-end
-
-config = {}
-
-print("azra: Starting environment"); 
--- Core functions that won't get reloaded at start
-
-function echo(...)
-  io.stdout:write(...);
-end
-
-function echon(...)
-	echo(....."\n");
-end
-
-
-function runfile(file)
-  echon("loading: "..file);
-  dofile(file);
 end
 
 function libload(file)
@@ -47,43 +43,40 @@ function libload(file)
 	end
 end
 
+
+function echo(...)
+  io.stdout:write(...);
+end
+
+function echon(...)
+	echo(....."\n");
+end
+
+function runfile(file)
+  echon("loading: "..file);
+  dofile(file);
+end
+
 -- Gets called each time a client connects
 function hook_login()
 echon("Run help(); to get help. -- Cpt. Obvious");
 end
--- Gets called when first client connects
-function hook_first_login()
-	libload_batch(config.libraries_interactive);
+
+function load_plugin(name)
+   for i,j in pairs(config.pluginpaths) do
+      if nil ~= do_azra_load_plugin(j.."lib"..name..".so") then
+	 return true
+      end      
+   end
+   print("Failed to load plugin: "..name);
 end
 
-function libload_batch(libs)
-	for i,v in ipairs(libs) do
-	libload(v);
-	end
+runfile(configfile)
+
+-- Now, let's load plugins, if any
+print("Loading plugins")
+for i,j in pairs(config.plugins) do
+   load_plugin(j)
 end
 
-
-function azra_reconf()
-  config = {}
-  config.urpc = {}
-  runfile(azra_getconf());
-  echon("configuration complete");
-end
-
-
-function azra_gc()
-  before = collectgarbage("count");
-  collectgarbage();
-  after = collectgarbage("count");
-  echon("Collecting garbage: "..before.."K -> "..after.."K");
-  --TODO: Call C function to clean up things
-end
-
-function azra_memusage()
-  after = collectgarbage("count");
-  echon("Memory usage: "..after.."K");
-end
-
-azra_reconf();
-libload_batch(config.libraries);
-print("environment ready"); 
+print("azra: environment ready"); 

@@ -12,22 +12,13 @@ struct azra_hook
   void* next;
 };
 
-void azra_register_hook(lua_State* L, struct azra_hook* hook);
-void azra_hooklist_init(lua_State* L);
-int network_init(lua_State* l, char* host, int portno);
-int azra_server_init(lua_State* l, char* host, int portno);
+/* Function registration mechanism */
+void azra_func_init(lua_State* L);
+void azra_func_reg(lua_State* L, struct azra_hook* hook);
+void azra_func_reg_list(lua_State* L, struct azra_hook* hook, int count);
 
-struct uart_settings_t
-{
- tcflag_t ifl;
- tcflag_t cfl;
- tcflag_t ofl;
- char * port;
- char* tag;
- int fd;
-};
-
-struct uart_settings_t* str_to_uart_settings();
+/* Runaway process protection */
+int azra_protector_init(lua_State *L);
 
 struct azra_epoll_hook
 {
@@ -37,6 +28,22 @@ struct azra_epoll_hook
 	 int (*io_handler)(struct epoll_event *ev);
 	 void* data; //userdata
 };
+
+/* Main loop control functions */
+int azra_init_loop();
+int azra_add_epollhook(struct azra_epoll_hook* hook);
+void azra_drop_epollhook(struct azra_epoll_hook* hook);
+int azra_main_loop();
+int azra_make_fd_nonblock(int sfd);
+
+/* Azra plugin loader */
+void azra_pluginloader_init(lua_State* L);
+
+
+int azra_setup_client(struct azra_epoll_hook* h);
+int network_init(lua_State* l, char* host, int portno);
+int azra_server_init(lua_State* l, char* host, int portno);
+
 
 
 struct azra_server_data
@@ -77,12 +84,7 @@ struct azra_client_data
 	int outpos; //output buffer pos
 };
 
-int azra_init_loop();
-int azra_add_epollhook(struct azra_epoll_hook* hook);
-void azra_drop_epollhook(struct azra_epoll_hook* hook);
-int azra_main_loop();
-int azra_make_fd_nonblock(int sfd);
-int azra_setup_client(struct azra_epoll_hook* h);
+
 void _azra_broadcastf(struct azra_client_data* cli, const char* fmt, ...);
 #define azra_broadcastf(cli,fmt,...) \
 	_azra_broadcastf(cli, "<b>%s</b>: " fmt, cli->h->name, ##__VA_ARGS__)
@@ -92,6 +94,7 @@ void _azra_broadcastf(struct azra_client_data* cli, const char* fmt, ...);
 	
 void azra_broadcaster_add_client(struct azra_client_data* cli);
 int azra_broadcaster_init(FILE* log);
+
 int azra_epollout(struct azra_epoll_hook* hook, int status);
 struct azra_charbuf* broadcaster_get_message(struct azra_client_data* cdata);
 #define azra_broadcaster_drop_client(cli) \
@@ -99,6 +102,5 @@ list_del(&cli->bclist);
 void azra_charbuf_put(struct azra_charbuf* ptr);
 void broadcaster_put_message(struct azra_client_data* cdata, 
 	struct azra_charbuf* msg);
-int azra_protector_init(lua_State *L);
 
 #endif

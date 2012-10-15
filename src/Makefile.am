@@ -1,1 +1,1 @@
-SUBDIRS = client server
+SUBDIRS = client ioserver

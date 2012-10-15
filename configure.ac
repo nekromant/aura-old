@@ -27,7 +27,7 @@ AC_CHECK_FUNCS([bzero socket strchr])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 src/server/Makefile
+                 src/ioserver/Makefile
                  src/client/Makefile
                  ])
 AC_OUTPUT

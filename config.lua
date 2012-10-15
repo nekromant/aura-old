@@ -1,6 +1,12 @@
 -- This is a sample configuration file for azra
 
-config = {
+
+
+config = { 
+  -- Where to look for init files
+  luadir = "./",
+  -- And what init file tu use
+  initfile = "lua/init.lua",
   -- initial set of libraries
   libraries={ "urpc" },
   -- load aditional libraries when interactive mode
@@ -19,4 +25,5 @@ config = {
     stop_on_error=false 
   } 
 }
+
 testv="test";

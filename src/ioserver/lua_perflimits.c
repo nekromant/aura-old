@@ -28,15 +28,15 @@ static void handle_runaway(lua_State *L, lua_Debug *ar)
 {
 	luaL_error(L,"Process is taking up too much time - aborted!");
 }
+
 static int count;
+
 int azra_setup_vm_protection(lua_State *L, int cnt)
 {
 	count = cnt;
-	azra_cbroadcastf("Adjusting endless loop protection to <b>%d</b> instructions\n", count);
 	lua_sethook (L, handle_runaway, LUA_MASKCOUNT, count);
 	return 0;
 }
-
 
 static int Lsetprot(lua_State *L)
 {
@@ -66,27 +66,23 @@ static int Lgetprot(lua_State *L)
 	return 1;
 }
 
-static struct azra_hook sprothook = {
+static struct azra_hook hooks[] = {
+{
     .func = Lsetprot,
     .name = "azra_setvmprot",
 	.args = "( n )",
     .help = "Setup runaway protection for n VM instructions"
-};
-
-static struct azra_hook gprothook = {
+}, {
     .func = Lgetprot,
     .name = "azra_getvmprot",
 	.args = "()",
     .help = "Get the number of allowed by protector instructions"
-};
-
-
+}};
 
 
 int azra_protector_init(lua_State *L)
 {
 	azra_setup_vm_protection(L, 90000000);
-	azra_register_hook(L,&sprothook);
-	azra_register_hook(L,&gprothook);
+	azra_func_reg_list(L, hooks, 2);
 	return 0;	
 }

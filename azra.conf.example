@@ -1,0 +1,18 @@
+config = { 
+   pluginpaths = {
+      "/usr/lib/azra",
+      "./plugins/"
+   },
+   plugins = {
+      "tcp_server",
+      "udp_server",
+      "urpc-core",
+      "urpc-serial",
+      "urpc-usb"	  
+   },
+
+   tcp_server = {
+      addr = "0.0.0.0",
+      port = 8000
+   }
+}
