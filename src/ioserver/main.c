@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <sys/cdefs.h>
 #include <lua.h>
+#include <getopt.h>
 #include <lualib.h>
 #include <lauxlib.h>
 #include <termios.h>
@@ -58,9 +59,29 @@ void interactive_loop(lua_State* L) {
 #define LUAPATH "./lua/"
 #define CONFIGFILE "./azra.conf.example"
 
+static const char opt_str[] = "dh?i";
+static const struct option lopts[] = {
+	{ "daemonize", no_argument, NULL, 'd' },
+	{ "interactive", no_argument, NULL, 'i' },
+	{ "help", no_argument, NULL, 'h' },
+	{ NULL, no_argument, NULL, 0 },
+};
+
+
+struct run_options  {
+	int daemonize;
+	int interactive;
+	char* luapath; 
+	char* configfile;
+};
+
 int main(int argc, char **argv)
 {
-	//This is the control state
+	int lindex, opt;
+	struct run_options* opts = calloc(1,sizeof(struct run_options));
+	opts->luapath = LUAPATH;
+	opts->configfile = CONFIGFILE;
+
 	lua_State *L = luaL_newstate();
 	if (argc<2)
 	{
@@ -73,6 +94,22 @@ int main(int argc, char **argv)
 	azra_func_init(L);
 	azra_protector_init(L);
 	azra_pluginloader_init(L);
+	opt = getopt_long(argc, argv, opt_str, lopts, &lindex);
+	switch (opt) {
+	case 'd':
+		opts->daemonize = 1;
+		break;
+	case 'i':
+		opts->interactive = 1;
+		printf("Interactive...\n");
+		break;
+	case '?':
+	case 'h':
+		printf("Help me!\n");
+		exit(1);
+		break;
+	}
+	
 	lua_pushstring(L,CONFIGFILE);
 	lua_setglobal(L,"configfile");
 	
@@ -80,9 +117,12 @@ int main(int argc, char **argv)
 	if (0 == s) 
 		s = lua_pcall(L, 0, LUA_MULTRET, 0);
         azra_check_lua_err(L,s);
-	interactive_loop(L);	
+
+	if (opts->interactive)
+		interactive_loop(L);
+	if (opts->daemonize)
+		printf("Daemonizing...\n");
 	
-	//Basically just loop here
 	return azra_main_loop();
 
 }

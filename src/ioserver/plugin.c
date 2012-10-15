@@ -11,6 +11,7 @@
 #include <stdio.h>
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #include <errno.h>
+#include <unistd.h>
 #include <string.h>
 #include <lua.h>
 #include <lualib.h>
@@ -21,13 +22,19 @@
 #include <netinet/in.h>
 #include <azra/azra.h>
 
-int l_plugin_load(lua_State* L) {
+int l_plugin_load(lua_State* L) 
+{
 	int argc = lua_gettop(L);
 	if (argc != 1)
 		return 0;
 	const char* plugin = lua_tostring(L,1);
+	if (0 != access(plugin, R_OK)) {
+		printf("azra: Can't access plugin: %s\n", plugin);
+		return 0;
+	}
 	
-	return 0;
+	return 1;
+	
 }
 
 
@@ -40,6 +47,7 @@ static struct azra_hook azra_pload =
 };
 
 
-void azra_pluginloader_init(lua_State* L) {
+void azra_pluginloader_init(lua_State* L) 
+{
 	azra_func_reg(L,&azra_pload);
 }
