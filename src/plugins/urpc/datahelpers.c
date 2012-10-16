@@ -53,7 +53,7 @@ int strdlmcnt(char* str, char d)
  * 2d/u - uint16_t signed/unsigned
  * 4d/u - uint32_t signed/unsigned
  * 8d/u - uint64_t signed/unsigned
- * 123r - raw data of length 123 (lightuserdata)
+ * -- NOT SUPPORTED YET --- 123r - raw data of length 123 (lightuserdata)
  * 
  */
 
@@ -62,7 +62,7 @@ int urpc_pack_string(lua_State *L, int n, char* dest, int destsz, int swap)
 	const char* s = lua_tostring(L, n);
 	int tsz = strlen(s)+1;
 	if (destsz<tsz)
-		return -1;
+		return -tsz;
 	strcpy(dest, s);
 	return tsz;
 }
@@ -72,6 +72,7 @@ int urpc_unpack_string(lua_State *L, char* src, int swap)
 	lua_pushstring(L, src);
 	return strlen(src)+1;
 }
+
 
 int urpc_pack_u8(lua_State *L, int n, unsigned char* dest, int destsz, int swap)
 {
@@ -102,12 +103,83 @@ int urpc_pack_s8(lua_State *L, int n, char* dest, int destsz, int swap)
 	return tsz;
 }
 
-
 int urpc_unpack_s8(lua_State *L, char* src, int swap)
 {
 	lua_pushnumber(L, *src);
 	return 1;
 }
+
+union u16 {
+	uint16_t n;
+	char bytes[2];
+};
+
+union s16 {
+	int16_t n;
+	char bytes[2];
+};
+
+int urpc_pack_u16(lua_State *L, int n, char* dest, int destsz, int swap)
+{
+	int tsz = 2;
+	if (destsz<tsz)
+		return -tsz;
+	union u16 number;		
+	number.n = lua_tonumber(L, n);
+	if (swap)
+		number.n = __swap16(number.n);
+	dest[0]=number.bytes[0];
+	dest[1]=number.bytes[1];
+	return tsz;
+}
+
+int urpc_pack_s16(lua_State *L, int n, char* dest, int destsz, int swap)
+{
+	int tsz = 2;
+	if (destsz<tsz)
+		return -tsz;
+	union s16 number;		
+	number.n = lua_tonumber(L, n);
+	if (swap)
+		number.n = __swap16(number.n);
+	dest[0]=number.bytes[0];
+	dest[1]=number.bytes[1];
+	return tsz;
+}
+
+int urpc_unpack_s16(lua_State *L, int16_t* src, int swap)
+{
+	int16_t tmp;
+	if (swap)
+		tmp = __swap16(*src);
+	else
+		tmp = *src;
+	lua_pushnumber(L, tmp);
+	return 1;
+}
+
+int urpc_unpack_u16(lua_State *L, uint16_t* src, int swap)
+{
+	uint16_t tmp;
+	if (swap)
+		tmp = __swap16(*src);
+	else
+		tmp = *src;
+	lua_pushnumber(L, tmp);
+	return 1;
+}
+
+
+union u32 {
+	uint32_t n;
+	char bytes[4];
+};
+
+union s32 {
+	int32_t n;
+	char bytes[4];
+};
+
 
 
 void* urpc_argcache(lua_State* L, char* format, int pack) {
@@ -124,7 +196,7 @@ void* urpc_argcache(lua_State* L, char* format, int pack) {
 		}else
 		{
 			sscanf(tok, "%d%c", &len, &fmt);
-			if (('d'==fmt) || ('u'==fmt)) {
+			if (('d' == fmt) || ('u' == fmt)) {
 				switch(len) {
 				case 1:
 					break;
