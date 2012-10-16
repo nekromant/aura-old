@@ -20,24 +20,54 @@ int host_is_little_endian()
 	return (nptr[0] == 1);
 }
 
-/* transport, instance, rest of args follow */
-int l_urpc_call(lua_State *L) 
+void lua_pushtablestring(lua_State* L , char* key , char* value) {
+	lua_pushstring(L, key);
+	lua_pushstring(L, value);
+	lua_settable(L, -3);
+} 
+
+void lua_pushtablebool(lua_State* L , char* key , int value) {
+	lua_pushstring(L, key);
+	lua_pushboolean(L, value);
+	lua_settable(L, -3);
+} 
+
+
+/* instance, id, rest of args follow */
+static int l_urpc_call(lua_State *L) 
 {
-	struct urpc_instance *i = lua_touserdata(L,1);
-	i->transport->call(L,i);
+	struct urpc_instance *i = lua_touserdata(L, 1);
+	int id = lua_tonumber(L, 2);	
+	return i->transport->call(L, i, id);
 }
 
-int l_urpc_discovery(lua_State *L) 
+static int l_urpc_discovery(lua_State *L) 
 {
 	struct urpc_instance *i = lua_touserdata(L,1);
 	printf("urpc: Running discovery via '%s' transport\n", i->transport->name);
-	return i->transport->discovery(L,0);
+	int n =  i->transport->discovery(L,i);
+	printf("urpc: Generating object cache\n", i->transport->name);
+	i->objects = malloc(sizeof(void*)*n);
+	int j=0;
+	struct urpc_object* h = i->head;
+	lua_newtable(L);
+	while (h) {
+		i->objects[j++]=h;
+		lua_pushnumber(L,j);
+		lua_newtable(L);
+		lua_pushtablebool(L,"is_method", OBJECT_IS_METHOD(h));
+		lua_pushtablestring(L,"name",h->name);
+		lua_pushtablestring(L,"args",h->args);
+		lua_pushtablestring(L,"reply",h->reply);
+		lua_settable(L, -3);
+		h=h->next;
+	}
+	return 1;
 }
-
 
 /* Arguments. First an urpc_transport, then go options to the backend */
 /* Open should return a userdata pointer to instance or nil*/
-int l_urpc_open(lua_State *L) 
+static int l_urpc_open(lua_State *L) 
 {
 	struct urpc_instance* inst;
 	struct urpc_transport *t = lua_touserdata(L,1);
@@ -47,6 +77,7 @@ int l_urpc_open(lua_State *L)
 		inst = malloc(sizeof(struct urpc_instance));
 		inst->private_data = private_data;
 		inst->transport=t;
+		inst->objects=NULL;
 		lua_pushlightuserdata(L,inst);
 		return 1;
 	}
@@ -74,6 +105,5 @@ int azra_plugin_init(lua_State *L)
 	lua_register(L,"__urpc_open", l_urpc_open);
 	lua_register(L,"__urpc_discovery", l_urpc_discovery);
 	lua_register(L,"__urpc_call", l_urpc_call);
-
 	return 1;
 }

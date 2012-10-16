@@ -27,21 +27,42 @@ static void* urpc_null_open(lua_State* L)
 		printf("urpc-nullt: need another arg\n");
 		return 0;
 	}
-	char *tag = lua_tostring(L,2);
+	const char *tag = lua_tostring(L,2);
 	printf("urpc-nullt: instance with tag '%s'\n", tag);
 	struct nullinstance* nl = malloc(sizeof(struct nullinstance));
 	nl->tag=tag;
 	return nl;
 }
 
-static int urpc_null_call(lua_State* L)
+static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 {	
-	
+	printf("Running a call to id #%d\n", id);
+	return 0;
 }
 
-static int urpc_null_discovery(lua_State* L)
+
+static struct urpc_object sobj = {
+	.flags = FLAG_METHOD,
+	.name = "saysomething",
+	.args = "s;",
+	.reply ="s;"
+};
+
+static struct urpc_object nullobjs = {
+	.flags = FLAG_METHOD,
+	.name = "printsomething",
+	.args = "s;",
+	.next = &sobj
+};
+
+/* Should return the count of discovered objects and set the head
+ * to the very first in the linked list 
+ */
+
+static int urpc_null_discovery(lua_State* L, struct urpc_instance* inst)
 {	
-	return 0;
+	inst->head = &nullobjs;
+	return 2;
 }
 
 

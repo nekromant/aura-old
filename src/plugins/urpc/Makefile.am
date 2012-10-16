@@ -1,2 +1,2 @@
 pkglib_LTLIBRARIES  = liburpc.la
-liburpc_la_SOURCES = urpc.c
+liburpc_la_SOURCES = urpc.c datahelpers.c
