@@ -84,19 +84,63 @@ int urpc_pack_u8(lua_State *L, int n, unsigned char* dest, int destsz, int swap)
 	return tsz;
 }
 
+
 int urpc_unpack_u8(lua_State *L, unsigned char* src, int swap)
 {
 	lua_pushnumber(L, *src);
 	return 1;
 }
 
+int urpc_pack_s8(lua_State *L, int n, char* dest, int destsz, int swap)
+{
+	int tsz = 1;
+	if (destsz<tsz)
+		return -1;
+	int num = lua_tonumber(L, n);
+	char dt = (char) num;
+	*dest=dt;
+	return tsz;
+}
 
-void* urpc_argcache(lua_State* L, char* format, int swap, int pack) {
+
+int urpc_unpack_s8(lua_State *L, char* src, int swap)
+{
+	lua_pushnumber(L, *src);
+	return 1;
+}
+
+
+void* urpc_argcache(lua_State* L, char* format, int pack) {
 	int argcount = strdlmcnt(format,';');
+	void** cache = malloc(sizeof(void*));
+	int i=0;
 	char* tmp = strdup(format);
 	char* tok = strtok(tmp, ";");
+	int len;
+	char fmt;
 	while (tok) {
 		if (*tok == 's') {
+			pack ? cache[i] = urpc_pack_string : urpc_unpack_string;
+		}else
+		{
+			sscanf(tok, "%d%c", &len, &fmt);
+			if (('d'==fmt) || ('u'==fmt)) {
+				switch(len) {
+				case 1:
+					break;
+				case 2:
+					break;
+				case 4:
+					break;
+				case 8:
+					break;
+				default:
+					break;
+				}
+			} else if ('r' == fmt) {
+				//Raw data
+			}
 		}
+		i++;
 	}
 }
