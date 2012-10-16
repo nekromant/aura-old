@@ -1,0 +1,1 @@
+./src/ioserver/azra --interactive

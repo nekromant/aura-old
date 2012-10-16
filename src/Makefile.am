@@ -1,1 +1,1 @@
-SUBDIRS = client ioserver
+SUBDIRS = client ioserver plugins

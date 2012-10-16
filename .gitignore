@@ -10,3 +10,6 @@ config.h.in
 *.o
 *.log
 *.cache
+*.la
+*.lo
+.libs

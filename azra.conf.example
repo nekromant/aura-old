@@ -1,9 +1,14 @@
 config = { 
    pluginpaths = {
-      "/usr/lib/azra",
-      "./plugins/"
+      "/usr/lib/azra/",
+      "./src/plugins/dummy/.libs/",
+      "./src/plugins/urpc/.libs/",
+      "./src/plugins/urpc-null/.libs/"
    },
    plugins = {
+      "urpc",
+      "dummy",
+      "urpc-null",
       "tcp_server",
       "udp_server",
       "urpc-core",
@@ -14,5 +19,9 @@ config = {
    tcp_server = {
       addr = "0.0.0.0",
       port = 8000
+   },
+
+   urpc = { 
+   payload_sz = 256,
    }
 }

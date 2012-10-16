@@ -22,19 +22,32 @@
 #include <netinet/in.h>
 #include <azra/azra.h>
 
+
 int l_plugin_load(lua_State* L) 
 {
+	char* error;
 	int argc = lua_gettop(L);
 	if (argc != 1)
 		return 0;
 	const char* plugin = lua_tostring(L,1);
 	if (0 != access(plugin, R_OK)) {
-		printf("azra: Can't access plugin: %s\n", plugin);
+		//printf("azra: Can't access plugin: %s\n", plugin);
 		return 0;
 	}
-	
-	return 1;
-	
+	printf("Loading: %s\n", plugin);
+	void* handle = dlopen(plugin, RTLD_LAZY|RTLD_GLOBAL);
+	if (!handle) {
+		printf("azra: Failed to load plugin: %s\n", dlerror());
+		return 0;
+	}
+	dlerror();
+	int (*plugin_init)(lua_State* L) = dlsym(handle, "azra_plugin_init");
+	if ((error = dlerror()) != NULL)  {
+		fprintf(stderr, "%s\n", error);
+		return 0;
+	}
+	/* TODO: May be push handle as userdata to lua plugin array */
+	return plugin_init(L);
 }
 
 
