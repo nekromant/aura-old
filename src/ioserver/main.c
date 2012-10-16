@@ -59,9 +59,10 @@ void interactive_loop(lua_State* L) {
 #define LUAPATH "./lua/"
 #define CONFIGFILE "./azra.conf.example"
 
-static const char opt_str[] = "dh?i";
+static const char opt_str[] = "dh?if:";
 static const struct option lopts[] = {
 	{ "daemonize", no_argument, NULL, 'd' },
+	{ "file", required_argument, NULL, 'f' },
 	{ "interactive", no_argument, NULL, 'i' },
 	{ "help", no_argument, NULL, 'h' },
 	{ NULL, no_argument, NULL, 0 },
@@ -74,6 +75,14 @@ struct run_options  {
 	char* luapath; 
 	char* configfile;
 };
+
+void run_lua_script(lua_State *L, char* name) 
+{
+	int s = luaL_loadfile( L, name);
+	if (0 == s) 
+		s = lua_pcall(L, 0, LUA_MULTRET, 0);
+        azra_check_lua_err(L, s);
+}
 
 int main(int argc, char **argv)
 {
@@ -92,31 +101,39 @@ int main(int argc, char **argv)
 	}
 	luaL_openlibs(L);
 	azra_func_init(L);
+	char* file=NULL;
 	azra_protector_init(L);
 	azra_pluginloader_init(L);
-	opt = getopt_long(argc, argv, opt_str, lopts, &lindex);
-	switch (opt) {
-	case 'd':
-		opts->daemonize = 1;
-		break;
-	case 'i':
-		opts->interactive = 1;
-		printf("Interactive...\n");
-		break;
-	case '?':
-	case 'h':
-		printf("Help me!\n");
-		exit(1);
-		break;
+
+	while (1) {
+		opt=getopt_long(argc, argv, opt_str, lopts, &lindex);
+		if (-1 == opt)
+			break;
+		switch (opt) {
+		case 'd':
+			opts->daemonize = 1;
+			break;
+		case 'i':
+			opts->interactive = 1;
+			printf("Interactive...\n");
+			break;
+		case 'f':
+			printf("file: %s\n", optarg);
+			file = optarg;
+			break;
+		case '?':
+		case 'h':
+			printf("Help me!\n");
+			exit(1);
+			break;
+		}
 	}
 	
-	lua_pushstring(L,CONFIGFILE);
-	lua_setglobal(L,"configfile");
-	
-	int s = luaL_loadfile( L, LUAPATH "init.lua");
-	if (0 == s) 
-		s = lua_pcall(L, 0, LUA_MULTRET, 0);
-        azra_check_lua_err(L,s);
+	lua_pushstring(L, CONFIGFILE);
+	lua_setglobal(L, "configfile");
+	run_lua_script(L, LUAPATH "init.lua");
+	if (file)
+		run_lua_script(L, file);
 
 	if (opts->interactive)
 		interactive_loop(L);
