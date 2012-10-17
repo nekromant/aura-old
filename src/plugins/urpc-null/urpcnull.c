@@ -34,9 +34,28 @@ static void* urpc_null_open(lua_State* L)
 	return nl;
 }
 
+
+static char reply[] = { 0x1, 0x2, 0x0, 0x4 };
 static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 {	
-	printf("Running a call to id #%d\n", id);
+	printf("urpc-nullt: Running a call to id #%d and dumping packed data\n", id);
+	struct urpc_chunk *chunk = urpc_pack_data(L, inst, 256, 0, 
+						  inst->objects[id]->acache, 0);
+	int i;
+	if (!chunk) {
+		printf("WTF?\n");
+		return 0;
+	}
+	for (i=0; i<chunk->size; i++) {
+		if ((i % 8) == 0)
+			printf("\nurpc-nullt: ");
+		printf(" 0x%2hhx ", chunk->data[i]);
+	}
+	urpc_chunk_free(chunk);
+	printf("\nurpc-nullt: ----------\n");
+	if (inst->reply){
+		printf("Decoding reply\n");
+	}
 	return 0;
 }
 
@@ -50,10 +69,18 @@ static struct urpc_object sobj = {
 
 static struct urpc_object nullobjs = {
 	.flags = FLAG_METHOD,
-	.name = "printsomething",
-	.args = "s;",
+	.name = "packsomenumbers",
+	.args = "1d;2d;1u;2u;",
 	.next = &sobj
 };
+
+static struct urpc_object nullobjs2 = {
+	.flags = FLAG_METHOD,
+	.name = "reply",
+	.args = "1d;2d;1u;2u;",
+	.next = &nullobjs
+};
+
 
 /* Should return the count of discovered objects and set the head
  * to the very first in the linked list 
@@ -62,7 +89,7 @@ static struct urpc_object nullobjs = {
 static int urpc_null_discovery(lua_State* L, struct urpc_instance* inst)
 {	
 	inst->head = &nullobjs;
-	return 2;
+	return 3;
 }
 
 

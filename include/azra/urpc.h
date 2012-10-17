@@ -36,18 +36,28 @@
 struct urpc_object {
 unsigned int id;
 	char flags;
-	char* name;
-	char* args;
-	char* reply;
-	struct urpc_object* next;
+	char *name;
+	char *args;
+	void *acache;
+	char *reply;
+	void *rcache;
+	struct urpc_object *next;
 };	
+
+/* a chunk of data */
+struct urpc_chunk {
+char* data;
+int size; /* used data bytes */
+int alloc; /* total allocated data bytes */
+};
+
 
 /* represents an instance with object cache */
 struct urpc_instance {
 	struct urpc_transport *transport;
-	struct urpc_object* head;
-	struct urpc_object** objects;
-	void* private_data;
+	struct urpc_object *head;
+	struct urpc_object **objects;
+	void *private_data;
 };
 
 /* represents a transport plugin */

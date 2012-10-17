@@ -18,14 +18,81 @@
  * pointers to pack/unpack functions, that serve as a cache
  *
  */
+struct urpc_chunk* urpc_chunk_allocate(int sz) 
+{
+	struct urpc_chunk* chunk = malloc(sizeof(struct urpc_chunk));
+	if (!chunk) 
+		return NULL;
+	chunk->data = malloc(sz);
+	if(!chunk->data)
+		goto err_alloc;
+	chunk->size=0;
+	chunk->alloc=sz;
+	return chunk;
+err_alloc:
+	free(chunk);
+	return NULL;
+}
 
+void urpc_chunk_free(struct urpc_chunk* chunk) 
+{
+	free(chunk->data);
+	free(chunk);
+}
+
+int urpc_chunk_realloc(struct urpc_chunk* chunk, int extra) 
+{
+	printf("urpc: buffer to small, reallocating\n");
+	printf("urpc: This can cause slowdowns \n");
+	int sz = chunk->alloc+extra;
+	char* data = realloc(data,sz);
+	if (!data) 
+		return -1;
+	chunk->data = data;
+	chunk->alloc = sz;
+	return 0;
+}
+
+typedef int (*packfunc_t)(lua_State *L, int n, char* dest, int destsz, int swap);
+typedef int (*unpackfunc_t)(lua_State *L, char* src, int swap);
 
 #define STACK_START 3
 /* Packs data from lua starting with element, return number of pushed elements */
-char* urpc_pack_data(lua_State* L, size_t sz, int reserved, char* format) 
+/* leaves 'reserved' bytes at the very start */
+struct urpc_chunk* urpc_pack_data(
+	lua_State* L, 
+	struct urpc_instance* inst,
+	size_t sz, 
+	int reserved, 
+	void** cache, 
+	int swap) 
 {
-	char* data = malloc(sz);
-
+	struct urpc_chunk* chunk = urpc_chunk_allocate(sz);
+	if (!chunk) 
+		return NULL;
+	packfunc_t pack;
+	int i=0;
+	int n;
+	int lua_arg=3;
+	chunk->size = reserved;
+	while(1) {
+	retry: 
+		pack = cache[i];
+		if (!pack) 
+			break;
+		n = pack(L, lua_arg++, 
+			 &chunk->data[chunk->size], 
+			 chunk->alloc - chunk->size, 
+			 swap);
+		if (n<0) {
+			urpc_chunk_realloc(chunk,-n*2);
+			goto retry;
+		}
+		chunk->size+=n;
+		i++;
+	}
+	printf("%d calls processed\n", i);
+	return chunk;
 }
 
 /* Unpacks data, pushes it to lua, return number of pushed elements */
@@ -181,38 +248,51 @@ union s32 {
 };
 
 
-
-void* urpc_argcache(lua_State* L, char* format, int pack) {
+void** urpc_argcache(lua_State* L, char* format, int pack) {
 	int argcount = strdlmcnt(format,';');
-	void** cache = malloc(sizeof(void*));
+	void** cache = malloc(sizeof(void*)*(argcount+1));
+	printf("fmt: %s count: %d\n", format, argcount);
 	int i=0;
 	char* tmp = strdup(format);
 	char* tok = strtok(tmp, ";");
 	int len;
 	char fmt;
 	while (tok) {
+		sscanf(tok, "%d%c", &len, &fmt);
 		if (*tok == 's') {
 			pack ? cache[i] = urpc_pack_string : urpc_unpack_string;
-		}else
-		{
-			sscanf(tok, "%d%c", &len, &fmt);
-			if (('d' == fmt) || ('u' == fmt)) {
-				switch(len) {
-				case 1:
-					break;
-				case 2:
-					break;
-				case 4:
-					break;
-				case 8:
-					break;
-				default:
-					break;
-				}
-			} else if ('r' == fmt) {
-				//Raw data
+		} else if (('d' == fmt)) {
+			switch(len) {
+			case 1:
+				pack ? cache[i] = urpc_pack_s8 : urpc_unpack_s8;
+				break;
+			case 2:
+				pack ? cache[i] = urpc_pack_s16 : urpc_unpack_s16;
+				break;
+			default:
+				goto error;
+				break;
 			}
-		}
+		} else if (('u' == fmt)) {
+			switch(len) {
+			case 1:
+				pack ? cache[i] = urpc_pack_u8 : urpc_unpack_u8;
+				break;
+			case 2:
+				pack ? cache[i] = urpc_pack_u16 : urpc_unpack_u16;
+				break;
+			default:
+				goto error;
+				break;
+			} 
+		} else
+			goto error;
 		i++;
+		tok = strtok(NULL, ";");
 	}
+	cache[i]=NULL;
+	return cache;
+error:
+	free(cache);
+	return 0;
 }

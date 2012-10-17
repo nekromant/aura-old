@@ -46,7 +46,7 @@ static int l_urpc_discovery(lua_State *L)
 	struct urpc_instance *i = lua_touserdata(L,1);
 	printf("urpc: Running discovery via '%s' transport\n", i->transport->name);
 	int n =  i->transport->discovery(L,i);
-	printf("urpc: Generating object cache\n", i->transport->name);
+	printf("urpc: Generating cache\n", i->transport->name);
 	i->objects = malloc(sizeof(void*)*n);
 	int j=0;
 	struct urpc_object* h = i->head;
@@ -60,6 +60,15 @@ static int l_urpc_discovery(lua_State *L)
 		lua_pushtablestring(L,"args",h->args);
 		lua_pushtablestring(L,"reply",h->reply);
 		lua_settable(L, -3);
+		if (OBJECT_IS_METHOD(h)) {
+			if (h->args)  h->acache = urpc_argcache(L, h->args,  1);
+			if (h->reply) h->rcache = urpc_argcache(L, h->reply, 0);
+		}else
+		{
+			h->acache = urpc_argcache(L,h->args,0);
+		}
+			 
+		
 		h=h->next;
 	}
 	return 1;
