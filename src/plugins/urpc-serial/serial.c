@@ -13,14 +13,15 @@
 #include <string.h>
 #include <azra/azra.h>
 #include <azra/urpc.h>
-
-
+#include "uart.h"
 
 struct serialinstance {
 	struct uart_settings_t* us;
 	struct azra_epoll_hook hook;
 	int swap;
 };
+
+
 
 static void* urpc_serial_open(lua_State* L)
 {
@@ -43,7 +44,8 @@ static void* urpc_serial_open(lua_State* L)
 	nl->hook.data = nl;
 	nl->hook.fd = nl->us->fd;
 	nl->hook.ev.events = EPOLLIN; 
-	azra_add_epollhook(&nl->hook);
+	//azra_add_epollhook(&nl->hook);
+	azra_init_loop();
 	return nl;
 error_init:
 	free(nl->us);
@@ -51,7 +53,6 @@ error_parse:
 	free(nl);
 	return 0;
 }
-
 
 char reply[64] = "(none)" ;
 static int urpc_serial_call(lua_State* L, struct  urpc_instance* inst, int id)

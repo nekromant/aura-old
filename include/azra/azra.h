@@ -30,10 +30,13 @@ struct azra_epoll_hook
 };
 
 /* Main loop control functions */
-int azra_init_loop();
+extern int azra_init_loop();
 int azra_add_epollhook(struct azra_epoll_hook* hook);
 void azra_drop_epollhook(struct azra_epoll_hook* hook);
-int azra_main_loop();
+
+void azra_loop_once(lua_State* L);
+void azra_loop_forever(lua_State* L);
+
 int azra_make_fd_nonblock(int sfd);
 
 /* Azra plugin loader */

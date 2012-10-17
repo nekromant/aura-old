@@ -61,5 +61,7 @@ static struct azra_hook azra_pload =
 
 void azra_pluginloader_init(lua_State* L) 
 {
+	/* Make symbols from core avaliable for libs */
+	dlopen(0 , RTLD_NOW | RTLD_GLOBAL);
 	azra_func_reg(L,&azra_pload);
 }

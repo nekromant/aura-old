@@ -81,7 +81,7 @@ end
 
 
 function urpc_open(name, ...)
-   node = { }
+   local node = { }
    tr = __urpc_transports[name]
    if nil == tr then
       print("fatal: transport is not avaliable")

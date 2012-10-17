@@ -98,20 +98,23 @@ void azra_drop_epollhook(struct azra_epoll_hook* hook)
 }
 
 
-int azra_main_loop()
+void inline azra_loop_once(lua_State* L)
 {
 	int c;
 	struct epoll_event ev;
 	struct azra_epoll_hook *hook;
 	printf("azra: entering main loop\n");
-	while(1)
-	{
-		c = epoll_wait(efd, &ev, 1, wait_interval);
-		if (c) {
-			hook = ev.data.ptr;
-			printf("azra: event from %s \n", hook->name);
-			hook->io_handler(&ev);
-		}
+	c = epoll_wait(efd, &ev, 1, wait_interval);
+	if (c) {
+		hook = ev.data.ptr;
+		printf("azra: event from %s \n", hook->name);
+		hook->io_handler(&ev);
+	}	
+}
+
+void azra_loop_forever(lua_State* L)
+{
+	while (1) {
+		azra_loop_once(L);
 	}
-	return 0;
 }

@@ -140,6 +140,6 @@ int main(int argc, char **argv)
 	if (opts->daemonize)
 		printf("Daemonizing...\n");
 	
-	return azra_main_loop();
-
+	azra_loop_forever(L);
+	return 0;
 }
