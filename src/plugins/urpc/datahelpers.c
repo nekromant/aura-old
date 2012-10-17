@@ -149,10 +149,15 @@ int urpc_pack_u16(lua_State *L, int n, char* dest, int destsz, int swap)
 		return -tsz;
 	union u16 number;		
 	number.n = lua_tonumber(L, n);
-	if (swap)
-		number.n = __swap16(number.n);
-	dest[0]=number.bytes[0];
-	dest[1]=number.bytes[1];
+	if (swap) {
+		dest[0]=number.bytes[1];
+		dest[1]=number.bytes[0];
+
+	} else {
+		dest[0]=number.bytes[0];
+		dest[1]=number.bytes[1];
+
+	}
 	return tsz;
 }
 
@@ -163,10 +168,13 @@ int urpc_pack_s16(lua_State *L, int n, char* dest, int destsz, int swap)
 		return -tsz;
 	union s16 number;		
 	number.n = lua_tonumber(L, n);
-	if (swap)
-		number.n = __swap16(number.n);
-	dest[0]=number.bytes[0];
-	dest[1]=number.bytes[1];
+	if (swap) {
+		dest[0]=number.bytes[1];
+		dest[1]=number.bytes[0];
+	} else {
+		dest[0]=number.bytes[0];
+		dest[1]=number.bytes[1];
+	}
 	return tsz;
 }
 
@@ -193,6 +201,7 @@ int urpc_unpack_u16(lua_State *L, uint16_t* src, int swap)
 }
 
 
+
 union u32 {
 	uint32_t n;
 	char bytes[4];
@@ -202,6 +211,72 @@ union s32 {
 	int32_t n;
 	char bytes[4];
 };
+
+
+int urpc_pack_u32(lua_State *L, int n, char* dest, int destsz, int swap)
+{
+	int tsz = 4;
+	if (destsz<tsz)
+		return -tsz;
+	union u32 number;		
+	number.n = lua_tonumber(L, n);
+	if (swap) {
+		dest[0]=number.bytes[3];
+		dest[1]=number.bytes[2];
+		dest[2]=number.bytes[1];
+		dest[3]=number.bytes[0];
+	} else {
+		dest[0]=number.bytes[0];
+		dest[1]=number.bytes[1];
+		dest[2]=number.bytes[2];
+		dest[3]=number.bytes[3];
+	}
+	return tsz;
+}
+
+int urpc_pack_s32(lua_State *L, int n, char* dest, int destsz, int swap)
+{
+	int tsz = 4;
+	if (destsz<tsz)
+		return -tsz;
+	union s32 number;		
+	number.n = lua_tonumber(L, n);
+	if (swap) {
+		dest[0]=number.bytes[3];
+		dest[1]=number.bytes[2];
+		dest[2]=number.bytes[1];
+		dest[3]=number.bytes[0];
+	} else {
+		dest[0]=number.bytes[0];
+		dest[1]=number.bytes[1];
+		dest[2]=number.bytes[2];
+		dest[3]=number.bytes[3];
+	}
+	return tsz;
+}
+
+int urpc_unpack_s32(lua_State *L, int32_t* src, int swap)
+{
+	int32_t tmp;
+	if (swap)
+		tmp = __swap32(*src);
+	else
+		tmp = *src;
+	lua_pushnumber(L, tmp);
+	return 1;
+}
+
+int urpc_unpack_u32(lua_State *L, uint32_t* src, int swap)
+{
+	uint32_t tmp;
+	if (swap)
+		tmp = __swap32(*src);
+	else
+		tmp = *src;
+	lua_pushnumber(L, tmp);
+	return 1;
+}
+
 
 
 void** urpc_argcache(lua_State* L, char* format, int pack) 
@@ -218,14 +293,17 @@ void** urpc_argcache(lua_State* L, char* format, int pack)
 	while (tok) {
 		sscanf(tok, "%d%c", &len, &fmt);
 		if (*tok == 's') {
-			cache[i] = pack ? urpc_pack_string : urpc_unpack_string;
+			cache[i] = pack ? (void*) urpc_pack_string : (void*) urpc_unpack_string;
 		} else if (('d' == fmt)) {
 			switch(len) {
 			case 1:
-				cache[i] = pack ? urpc_pack_s8 : urpc_unpack_s8;
+				cache[i] =  pack ? (void*) urpc_pack_s8 : (void*) urpc_unpack_s8;
 				break;
 			case 2:
-				cache[i] = pack ? urpc_pack_s16 : urpc_unpack_s16;
+				cache[i] = pack ? (void*) urpc_pack_s16 : (void*) urpc_unpack_s16;
+				break;
+			case 4:
+				cache[i] = pack ? (void*) urpc_pack_s32 : (void*) urpc_unpack_s32;
 				break;
 			default:
 				goto error;
@@ -234,10 +312,13 @@ void** urpc_argcache(lua_State* L, char* format, int pack)
 		} else if (('u' == fmt)) {
 			switch(len) {
 			case 1:
-				cache[i] = pack ? urpc_pack_u8 : urpc_unpack_u8;
+				cache[i] = pack ? (void*) urpc_pack_u8 : (void*) urpc_unpack_u8;
 				break;
 			case 2:
-				cache[i] = pack ? urpc_pack_u16 : urpc_unpack_u16;
+				cache[i] = pack ? (void*) urpc_pack_u16 : (void*) urpc_unpack_u16;
+				break;
+			case 4:
+				cache[i] = pack ? (void*) urpc_pack_u32 : (void*) urpc_unpack_u32;
 				break;
 			default:
 				goto error;
