@@ -3,15 +3,13 @@ config = {
       "/usr/lib/azra/",
       "./src/plugins/dummy/.libs/",
       "./src/plugins/urpc/.libs/",
-      "./src/plugins/urpc-null/.libs/"
+      "./src/plugins/urpc-null/.libs/",
+      "./src/plugins/urpc-serial/.libs/"	
    },
    plugins = {
       "urpc",
       "dummy",
       "urpc-null",
-      "tcp_server",
-      "udp_server",
-      "urpc-core",
       "urpc-serial",
       "urpc-usb"	  
    },

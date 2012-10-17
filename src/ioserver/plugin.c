@@ -34,7 +34,6 @@ int l_plugin_load(lua_State* L)
 		//printf("azra: Can't access plugin: %s\n", plugin);
 		return 0;
 	}
-	printf("Loading: %s\n", plugin);
 	void* handle = dlopen(plugin, RTLD_LAZY|RTLD_GLOBAL);
 	if (!handle) {
 		printf("azra: Failed to load plugin: %s\n", dlerror());

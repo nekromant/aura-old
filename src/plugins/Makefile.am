@@ -1,2 +1,3 @@
 libdir=@libdir@/azra
-SUBDIRS=dummy urpc urpc-null
+SUBDIRS=dummy urpc urpc-null urpc-serial
+

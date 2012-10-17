@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([azra], [0.1], [azrabugs@necromant.ath.cx])
+AC_INIT([azra], [0.1], [azrabugs@ncrmnt.org])
 AM_INIT_AUTOMAKE
 LT_INIT
 AC_CONFIG_SRCDIR([include/config.h.in])
@@ -35,6 +35,7 @@ AC_CONFIG_FILES([Makefile
 		 src/plugins/dummy/Makefile	 
 		 src/plugins/urpc/Makefile
 		 src/plugins/urpc-null/Makefile
+		 src/plugins/urpc-serial/Makefile	
                  src/ioserver/Makefile
                  src/client/Makefile
                  ])
