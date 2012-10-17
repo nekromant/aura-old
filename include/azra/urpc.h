@@ -34,7 +34,7 @@
 
 /* represents individual methods and events from an instance */
 struct urpc_object {
-unsigned int id;
+	unsigned int id;
 	char flags;
 	char *name;
 	char *args;
@@ -46,9 +46,9 @@ unsigned int id;
 
 /* a chunk of data */
 struct urpc_chunk {
-char* data;
-int size; /* used data bytes */
-int alloc; /* total allocated data bytes */
+	char* data;
+	int size; /* used data bytes */
+	int alloc; /* total allocated data bytes */
 };
 
 
@@ -63,7 +63,7 @@ struct urpc_instance {
 /* represents a transport plugin */
 struct urpc_transport {
 	char* name;
-	int (*open)(lua_State* L);
+	void* (*open)(lua_State* L);
 	int (*call)(lua_State* L, struct urpc_instance* instance, int id);
 	int (*discovery)(lua_State* L, struct urpc_instance* instance);
 };
@@ -72,3 +72,21 @@ struct urpc_transport {
 	data->private_data
 
 #endif
+
+
+/* Data packing and unpacking stuff */
+int urpc_unpack_data(lua_State* L, char* data, void** cache, int swap);
+struct urpc_chunk* urpc_pack_data(
+	lua_State* L, 
+	struct urpc_instance* inst,
+	size_t sz, 
+	int reserved, 
+	void** cache, 
+	int swap);
+void** urpc_argcache(lua_State* L, char* format, int pack);
+
+struct urpc_chunk* urpc_chunk_allocate(int sz);
+void urpc_chunk_free(struct urpc_chunk* chunk);
+int urpc_chunk_realloc(struct urpc_chunk* chunk, int extra) ;
+
+

@@ -56,19 +56,18 @@ static int l_urpc_discovery(lua_State *L)
 		lua_pushnumber(L,j);
 		lua_newtable(L);
 		lua_pushtablebool(L,"is_method", OBJECT_IS_METHOD(h));
-		lua_pushtablestring(L,"name",h->name);
-		lua_pushtablestring(L,"args",h->args);
-		lua_pushtablestring(L,"reply",h->reply);
+		lua_pushtablestring(L, "name",  h->name);
+		lua_pushtablestring(L, "args",  h->args);
+		lua_pushtablestring(L, "reply", h->reply);
 		lua_settable(L, -3);
 		if (OBJECT_IS_METHOD(h)) {
-			if (h->args)  h->acache = urpc_argcache(L, h->args,  1);
-			if (h->reply) h->rcache = urpc_argcache(L, h->reply, 0);
+			h->acache = urpc_argcache(L, h->args,  1);
+			h->rcache = urpc_argcache(L, h->reply, 0);
 		}else
 		{
 			h->acache = urpc_argcache(L,h->args,0);
+			h->rcache = NULL;
 		}
-			 
-		
 		h=h->next;
 	}
 	return 1;

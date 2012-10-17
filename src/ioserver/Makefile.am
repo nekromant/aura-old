@@ -6,5 +6,5 @@ azra_SOURCES = \
 	main.c \
 	plugin.c
 
-AM_CFLAGS = $(lua_CFLAGS) -ldl -lreadline -Wall -Werror -I$(top_srcdir)/include
+AM_CFLAGS = $(lua_CFLAGS) -Wall -ldl -lreadline -Wall -Werror -I$(top_srcdir)/include
 azra_LDADD = $(lua_LIBS)

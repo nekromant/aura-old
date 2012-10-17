@@ -79,4 +79,36 @@ for i,j in pairs(config.plugins) do
    load_plugin(j)
 end
 
+
+function urpc_open(name, ...)
+   node = { }
+   tr = __urpc_transports[name]
+   if nil == tr then
+      print("fatal: transport is not avaliable")
+      return nil;
+   end
+   node.__transport = tr;
+   node.__instance = __urpc_open(tr, ...);
+   if nil == node.__instance then
+      print("fatal: call to open the instance failed");
+      return nil
+   end
+   n = __urpc_discovery(node.__instance)
+   for i,j in pairs(n) do
+      if j['is_method'] then
+	 node[j['name']] = function(...) 
+	    return __urpc_call(node.__instance, i-1, ...)
+	 end
+      end
+      if j['is_event'] then
+	 node[j['name']] = function(...)
+	    print("Event "..j['name'].." occured")
+	    print(unpack(arg))
+	 end
+      end
+   end
+   return node
+end
+
+
 print("azra: environment ready"); 

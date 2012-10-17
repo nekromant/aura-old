@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 
 
 struct nullinstance {
-	char* tag;
+	const char* tag;
 };
 
 static void* urpc_null_open(lua_State* L)
@@ -35,7 +36,7 @@ static void* urpc_null_open(lua_State* L)
 }
 
 
-static char reply[] = { 0x1, 0x2, 0x0, 0x4 };
+char reply[64] = "(none)" ;
 static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 {	
 	printf("urpc-nullt: Running a call to id #%d and dumping packed data\n", id);
@@ -46,6 +47,9 @@ static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 		printf("WTF?\n");
 		return 0;
 	}
+	gethostname(reply, 64);
+	struct nullinstance *prv = URPC_INSTANCE_PRIVATE(inst);
+	printf("\nurpc-nullt: %s", prv->tag);
 	for (i=0; i<chunk->size; i++) {
 		if ((i % 8) == 0)
 			printf("\nurpc-nullt: ");
@@ -53,31 +57,32 @@ static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 	}
 	urpc_chunk_free(chunk);
 	printf("\nurpc-nullt: ----------\n");
-	if (inst->reply){
-		printf("Decoding reply\n");
+	if (inst->objects[id]->reply){
+		int n = urpc_unpack_data(L, reply,
+					inst->objects[id]->rcache, 0);
+		return n;
+		
 	}
 	return 0;
 }
 
-
 static struct urpc_object sobj = {
 	.flags = FLAG_METHOD,
-	.name = "saysomething",
-	.args = "s;",
+	.name = "hostname",
 	.reply ="s;"
 };
 
 static struct urpc_object nullobjs = {
 	.flags = FLAG_METHOD,
-	.name = "packsomenumbers",
+	.name = "packnumbers",
 	.args = "1d;2d;1u;2u;",
 	.next = &sobj
 };
 
 static struct urpc_object nullobjs2 = {
 	.flags = FLAG_METHOD,
-	.name = "reply",
-	.args = "1d;2d;1u;2u;",
+	.name = "unpacknumbers",
+	.reply = "1d;2d;1u;2u;",
 	.next = &nullobjs
 };
 
@@ -88,13 +93,13 @@ static struct urpc_object nullobjs2 = {
 
 static int urpc_null_discovery(lua_State* L, struct urpc_instance* inst)
 {	
-	inst->head = &nullobjs;
+	inst->head = &nullobjs2;
 	return 3;
 }
 
 
 static struct urpc_transport ntrans = {
-	.name = "nullt",
+	.name = "null",
 	.open = urpc_null_open,
 	.call= urpc_null_call,
 	.discovery = urpc_null_discovery,
