@@ -1,7 +1,8 @@
-#ifndef _AZRA_H
-#define _AZRA_H
+#ifndef _AURA_H
+#define _AURA_H
 
 #include <aura/list.h>
+#include <aura/chunk.h>
 
 struct aura_hook
 {
@@ -42,7 +43,7 @@ void aura_loop_once(lua_State* L);
 void aura_loop_forever(lua_State* L);
 int aura_make_fd_nonblock(int sfd);
 
-/* Azra plugin loader */
+/* aura plugin loader */
 void aura_pluginloader_init(lua_State* L);
 
 

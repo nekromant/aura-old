@@ -40,7 +40,7 @@ char reply[64] = "(none)" ;
 static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 {	
 	printf("urpc-nullt: Running a call to id #%d and dumping packed data\n", id);
-	struct urpc_chunk *chunk = urpc_pack_data(L, inst, 256, 0, 
+	struct aura_chunk *chunk = urpc_pack_data(L, inst, 256, 0, 
 						  inst->objects[id]->acache, 0);
 	int i;
 	if (!chunk) {
@@ -55,7 +55,7 @@ static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 			printf("\nurpc-nullt: ");
 		printf(" 0x%2hhx ", chunk->data[i]);
 	}
-	urpc_chunk_free(chunk);
+	aura_chunk_free(chunk);
 	printf("\nurpc-nullt: ----------\n");
 	if (inst->objects[id]->reply){
 		int n = urpc_unpack_data(L, reply,

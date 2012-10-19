@@ -308,7 +308,7 @@ error:
 #define STACK_START 3
 /* Packs data from lua starting with element, return number of pushed elements */
 /* leaves 'reserved' bytes at the very start */
-struct urpc_chunk* urpc_pack_data(
+struct aura_chunk* urpc_pack_data(
 	lua_State* L, 
 	struct urpc_instance* inst,
 	size_t sz, 
@@ -316,7 +316,7 @@ struct urpc_chunk* urpc_pack_data(
 	void** cache, 
 	int swap) 
 {
-	struct urpc_chunk* chunk = urpc_chunk_allocate(sz);
+	struct aura_chunk* chunk = aura_chunk_allocate(sz);
 	if (!chunk) 
 		return NULL;
 	packfunc_t pack;
@@ -336,7 +336,7 @@ struct urpc_chunk* urpc_pack_data(
 			 chunk->alloc - chunk->size, 
 			 swap);
 		if (n<0) {
-			urpc_chunk_realloc(chunk,-n*2);
+			aura_chunk_realloc(chunk,-n*2);
 			goto retry;
 		}
 		chunk->size+=n;	

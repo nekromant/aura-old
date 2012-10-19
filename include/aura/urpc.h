@@ -44,13 +44,6 @@ struct urpc_object {
 	struct urpc_object *next;
 };	
 
-/* a chunk of data */
-struct urpc_chunk {
-	char* data;
-	int size; /* used data bytes */
-	int alloc; /* total allocated data bytes */
-};
-
 
 /* represents an instance with object cache */
 struct urpc_instance {
@@ -71,22 +64,19 @@ struct urpc_transport {
 #define URPC_INSTANCE_PRIVATE(data)		\
 	data->private_data
 
-#endif
 
 
 /* Data packing and unpacking stuff */
 int urpc_unpack_data(lua_State* L, char* data, void** cache, int swap);
-struct urpc_chunk* urpc_pack_data(
+struct aura_chunk* urpc_pack_data(
 	lua_State* L, 
 	struct urpc_instance* inst,
 	size_t sz, 
 	int reserved, 
 	void** cache, 
 	int swap);
+
 void** urpc_argcache(lua_State* L, char* format, int pack);
 
-struct urpc_chunk* urpc_chunk_allocate(int sz);
-void urpc_chunk_free(struct urpc_chunk* chunk);
-int urpc_chunk_realloc(struct urpc_chunk* chunk, int extra) ;
 
-
+#endif
