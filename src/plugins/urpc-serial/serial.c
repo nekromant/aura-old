@@ -12,12 +12,14 @@
 #include <termios.h>
 #include <string.h>
 #include <aura/aura.h>
+#include <aura/asyncio.h>
 #include <aura/urpc.h>
 #include "uart.h"
 
 struct serialinstance {
 	struct uart_settings_t* us;
 	struct aura_epoll_hook hook;
+	struct aura_async_xfer *xfer;
 	int swap;
 };
 
@@ -44,8 +46,10 @@ static void* urpc_serial_open(lua_State* L)
 	nl->hook.data = nl;
 	nl->hook.fd = nl->us->fd;
 	nl->hook.ev.events = EPOLLIN; 
-	//aura_add_epollhook(&nl->hook);
-	aura_init_loop();
+	nl->xfer = aura_create_async_xfer(&nl->hook);
+	if (!nl->xfer)
+		goto error_init;
+	
 	return nl;
 error_init:
 	free(nl->us);

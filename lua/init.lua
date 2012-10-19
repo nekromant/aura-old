@@ -1,18 +1,18 @@
 require "lfs"
 
-print("azra: Warming up lua environment"); 
+print("aura: Warming up lua environment"); 
 
 function azra_gc()
   before = collectgarbage("count");
   collectgarbage();
   after = collectgarbage("count");
-  echon("Collecting garbage: "..before.."K -> "..after.."K");
+  echon("aura: Collecting garbage: "..before.."K -> "..after.."K");
   --TODO: Call C function to clean up things
 end
 
 function azra_memusage()
   after = collectgarbage("count");
-  echon("Memory usage: "..after.."K");
+  echon("aura: Memory usage: "..after.."K");
 end
 
 -- Library byte-compiling routines  
@@ -64,7 +64,7 @@ end
 
 function load_plugin(name)
    for i,j in pairs(config.pluginpaths) do
-      if nil ~= do_azra_load_plugin(j.."lib"..name..".so") then
+      if nil ~= do_aura_load_plugin(j.."lib"..name..".so") then
 	 return true
       end      
    end
@@ -111,4 +111,4 @@ function urpc_open(name, ...)
 end
 
 
-print("azra: environment ready"); 
+print("aura: environment ready"); 

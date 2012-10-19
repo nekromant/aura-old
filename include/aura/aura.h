@@ -3,6 +3,7 @@
 
 #include <aura/list.h>
 #include <aura/chunk.h>
+#include <aura/asyncio.h>
 
 struct aura_hook
 {
@@ -19,7 +20,7 @@ struct aura_epoll_hook
 	struct epoll_event ev;
 	int fd;
 	char* name;
-	int (*io_handler)(struct epoll_event *ev, lua_State* L);
+	int (*io_handler)(struct epoll_event *ev);
 	void* data; //userdata
 };
 
@@ -96,5 +97,6 @@ void _aura_broadcastf(struct aura_client_data* cli, const char* fmt, ...);
 void aura_broadcaster_add_client(struct aura_client_data* cli);
 int aura_broadcaster_init(FILE* log);
 */
+
 
 #endif

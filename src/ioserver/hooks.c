@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
-
+#include <stdlib.h>
 #include <stdio.h>
 #include "lua.h"
 #include "lauxlib.h"

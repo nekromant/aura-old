@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 	aura_func_init(L);
 	char* file=NULL;
 	aura_protector_init(L);
+	aura_init_loop();
 	aura_pluginloader_init(L);
 
 	while (1) {
