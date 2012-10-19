@@ -11,13 +11,13 @@
 #include <lauxlib.h>
 #include <termios.h>
 #include <string.h>
-#include <azra/azra.h>
-#include <azra/urpc.h>
+#include <aura/aura.h>
+#include <aura/urpc.h>
 #include "uart.h"
 
 struct serialinstance {
 	struct uart_settings_t* us;
-	struct azra_epoll_hook hook;
+	struct aura_epoll_hook hook;
 	int swap;
 };
 
@@ -44,8 +44,8 @@ static void* urpc_serial_open(lua_State* L)
 	nl->hook.data = nl;
 	nl->hook.fd = nl->us->fd;
 	nl->hook.ev.events = EPOLLIN; 
-	//azra_add_epollhook(&nl->hook);
-	azra_init_loop();
+	//aura_add_epollhook(&nl->hook);
+	aura_init_loop();
 	return nl;
 error_init:
 	free(nl->us);
@@ -105,7 +105,7 @@ static struct urpc_transport ntrans = {
 	.discovery = urpc_serial_discovery,
 };
 
-int azra_plugin_init(lua_State* L) 
+int aura_plugin_init(lua_State* L) 
 {
 	urpc_register_transport(L,&ntrans);
 	printf("urpc-serial: uRPC 'serial' transport\n");

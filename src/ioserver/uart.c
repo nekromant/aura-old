@@ -18,7 +18,7 @@
 #include <lauxlib.h>
 #include <termios.h>
 
-#include <azra/azra.h>
+#include <aura/aura.h>
 
 //tag:/dev/ttyUSB0:115200:8:n:1\n
 //#define set_prop(key,value) if (t)

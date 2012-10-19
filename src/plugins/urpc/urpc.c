@@ -10,8 +10,8 @@
 #include <lauxlib.h>
 #include <termios.h>
 #include <string.h>
-#include <azra/azra.h>
-#include <azra/urpc.h>
+#include <aura/aura.h>
+#include <aura/urpc.h>
 
 int host_is_little_endian()
 {
@@ -102,7 +102,7 @@ void urpc_register_transport(lua_State* L, struct urpc_transport* t)
 	lua_settable(L, -3);
 }
 
-int azra_plugin_init(lua_State *L) 
+int aura_plugin_init(lua_State *L) 
 {
 	lua_newtable(L);
 	lua_setglobal(L,"__urpc_transports");

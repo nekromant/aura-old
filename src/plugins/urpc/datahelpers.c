@@ -10,48 +10,14 @@
 #include <lauxlib.h>
 #include <termios.h>
 #include <string.h>
-#include <azra/azra.h>
-#include <azra/urpc.h>
+#include <aura/aura.h>
+#include <aura/urpc.h>
 
 /* This features a very curious parser to optimize the pack/unpack
  * times. To avoid tokenizing the string each time, we build an array of
- * pointers to pack/unpack functions, that serve as a cache
- *
+ * pointers to pack/unpack functions, that serves as a dumb cache.
+ * 
  */
-struct urpc_chunk* urpc_chunk_allocate(int sz) 
-{
-	struct urpc_chunk* chunk = malloc(sizeof(struct urpc_chunk));
-	if (!chunk) 
-		return NULL;
-	chunk->data = malloc(sz);
-	if(!chunk->data)
-		goto err_alloc;
-	chunk->size=0;
-	chunk->alloc=sz;
-	return chunk;
-err_alloc:
-	free(chunk);
-	return NULL;
-}
-
-void urpc_chunk_free(struct urpc_chunk* chunk) 
-{
-	free(chunk->data);
-	free(chunk);
-}
-
-int urpc_chunk_realloc(struct urpc_chunk* chunk, int extra) 
-{
-	printf("urpc: buffer to small, reallocating\n");
-	printf("urpc: This can cause slowdowns \n");
-	int sz = chunk->alloc+extra;
-	char* data = realloc(data,sz);
-	if (!data) 
-		return -1;
-	chunk->data = data;
-	chunk->alloc = sz;
-	return 0;
-}
 
 typedef int (*packfunc_t)(lua_State *L, int n, char* dest, int destsz, int swap);
 typedef int (*unpackfunc_t)(lua_State *L, char* src, int swap);

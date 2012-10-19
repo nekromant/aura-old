@@ -1,5 +1,5 @@
-bin_PROGRAMS = azra
-azra_SOURCES = \
+bin_PROGRAMS = aura
+aura_SOURCES = \
 	lua_perflimits.c \
 	hooks.c \
 	main_loop.c \
@@ -7,4 +7,4 @@ azra_SOURCES = \
 	plugin.c
 
 AM_CFLAGS = $(lua_CFLAGS) -Wall -fPIC -ldl -rdynamic -lreadline -Wall -Werror -I$(top_srcdir)/include
-azra_LDADD = $(lua_LIBS)
+aura_LDADD = $(lua_LIBS)

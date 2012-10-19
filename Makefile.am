@@ -1,6 +1,6 @@
-library_includedir = $(includedir)/azra
-library_include_HEADERS = include/azra/azra.h \
-	include/azra/list.h \
-	include/azra/urpc.h
+library_includedir = $(includedir)/aura
+library_include_HEADERS = include/aura/aura.h \
+	include/aura/list.h \
+	include/aura/urpc.h
 
 SUBDIRS = src

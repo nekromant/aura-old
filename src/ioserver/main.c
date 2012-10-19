@@ -12,16 +12,16 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <string.h>
-#include <azra/azra.h>
+#include <aura/aura.h>
 
-static int azra_check_lua_err(lua_State* L, int status)
+static int aura_check_lua_err(lua_State* L, int status)
 {
 	if (status && !lua_isnil(L, -1))
 	{
 		const char* msg = lua_tostring(L, -1);
 		if (!msg)
 			msg = "(error object is not a string)";
- 		fprintf(stderr, "azra: %s\n", msg);
+ 		fprintf(stderr, "aura: %s\n", msg);
 		lua_pop(L, 1);		
 	}
 	
@@ -35,7 +35,7 @@ void interactive_loop(lua_State* L) {
 	for(;;)
 	{
 		// getting the current user 'n path
-		snprintf(shell_prompt, sizeof(shell_prompt), "azra # " );
+		snprintf(shell_prompt, sizeof(shell_prompt), "aura # " );
 		// inputing...
 		input = readline(shell_prompt);
 		// eof
@@ -47,7 +47,7 @@ void interactive_loop(lua_State* L) {
 		add_history(input);
 		int error = luaL_loadbuffer(L, input, strlen(input), "shell") ||
 			lua_pcall(L, 0, 0, 0);
-		azra_check_lua_err(L,error);
+		aura_check_lua_err(L,error);
 		/* do stuff */
  
 		// Т.к. вызов readline() выделяет память, но не освобождает(а возвращает), то эту память нужно вернуть(освободить).
@@ -57,7 +57,7 @@ void interactive_loop(lua_State* L) {
 
 
 #define LUAPATH "./lua/"
-#define CONFIGFILE "./azra.conf.example"
+#define CONFIGFILE "./aura.conf.example"
 
 static const char opt_str[] = "dh?if:";
 static const struct option lopts[] = {
@@ -81,7 +81,7 @@ void run_lua_script(lua_State *L, char* name)
 	int s = luaL_loadfile( L, name);
 	if (0 == s) 
 		s = lua_pcall(L, 0, LUA_MULTRET, 0);
-        azra_check_lua_err(L, s);
+        aura_check_lua_err(L, s);
 }
 
 int main(int argc, char **argv)
@@ -100,10 +100,10 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	luaL_openlibs(L);
-	azra_func_init(L);
+	aura_func_init(L);
 	char* file=NULL;
-	azra_protector_init(L);
-	azra_pluginloader_init(L);
+	aura_protector_init(L);
+	aura_pluginloader_init(L);
 
 	while (1) {
 		opt=getopt_long(argc, argv, opt_str, lopts, &lindex);
@@ -140,6 +140,6 @@ int main(int argc, char **argv)
 	if (opts->daemonize)
 		printf("Daemonizing...\n");
 	
-	azra_loop_forever(L);
+	aura_loop_forever(L);
 	return 0;
 }

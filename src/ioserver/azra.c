@@ -11,7 +11,7 @@
 #include <termios.h>
 
 #include <string.h>
-#include <azra/azra.h>
+#include <aura/aura.h>
 
 
 /* TODO: Set config from cmd line */
@@ -22,9 +22,9 @@ int Lgetconf(lua_State* L)
 	return 1;
 }
 
-static struct azra_hook getconf = {
+static struct aura_hook getconf = {
 	.func = Lgetconf,
-	.name = "azra_getconf",
+	.name = "aura_getconf",
 	.help = "Get config file name"
 };
 
@@ -46,7 +46,7 @@ static int call_me_from_lua (lua_State *L) {
 	return 2;                   /* number of results */
 }
 
-static struct azra_hook testhook = {
+static struct aura_hook testhook = {
 	.func = call_me_from_lua,
 	.name = "runme",
 	.help = "Test function"
@@ -64,7 +64,7 @@ static struct azra_hook testhook = {
  fprintf(stderr, "%s\n", lua_tostring(l, -1));
  lua_pop(l, 1);
  }
- printf("azra# ");
+ printf("aura# ");
  fflush(stdout);
  } while (fgets(buff, sizeof(buff), stdin) != NULL);
 */
@@ -77,10 +77,10 @@ char **argv;
 {
 	lua_State *l = luaL_newstate();
 	luaL_openlibs(l);
-	azra_hooklist_init(l);
+	aura_hooklist_init(l);
 
-	azra_register_hook(l,&testhook);
-	azra_register_hook(l,&getconf);
+	aura_register_hook(l,&testhook);
+	aura_register_hook(l,&getconf);
 
 	int error = luaL_loadbuffer(l, initstr, strlen(initstr), "line") ||
 		lua_pcall(l, 0, 0, 0);
@@ -90,11 +90,11 @@ char **argv;
 	}
 	//TODO: Argument parsing
 	//Lua scripts directory
-	azra_broadcaster_init(stdout);
-	azra_init_loop();
-	azra_protector_init(l);
-	azra_server_init(l,"0.0.0.0",8888);
-	azra_main_loop();
+	aura_broadcaster_init(stdout);
+	aura_init_loop();
+	aura_protector_init(l);
+	aura_server_init(l,"0.0.0.0",8888);
+	aura_main_loop();
 	return 0;
 
 }

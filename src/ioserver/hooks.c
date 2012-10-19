@@ -8,15 +8,15 @@
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <sys/cdefs.h>
-#include <azra/azra.h>
+#include <aura/aura.h>
 
-static struct azra_hook* base;
-static struct azra_hook* end;
+static struct aura_hook* base;
+static struct aura_hook* end;
 
 /* Pushes a list of registered core functions onto the stack */
-static int l_azra_help(lua_State *L)
+static int l_aura_help(lua_State *L)
 {
-	struct azra_hook* h = base;
+	struct aura_hook* h = base;
 	int i=1;
 	lua_newtable(L);
 	do 
@@ -49,9 +49,9 @@ static int l_azra_help(lua_State *L)
 
 
 
-void azra_func_reg(lua_State* L, struct azra_hook* hook)
+void aura_func_reg(lua_State* L, struct aura_hook* hook)
 {
-	struct azra_hook* h = end;
+	struct aura_hook* h = end;
 	h->next = hook;
 	h=h->next;
 	h->next=0;
@@ -59,26 +59,26 @@ void azra_func_reg(lua_State* L, struct azra_hook* hook)
 	end=h;
 }
 
-void azra_func_reg_list(lua_State* L, struct azra_hook* hook, int count) {
+void aura_func_reg_list(lua_State* L, struct aura_hook* hook, int count) {
 	int i; 
 	for (i=0; i<count; i++)
-		azra_func_reg(L,&hook[i]);
+		aura_func_reg(L,&hook[i]);
 }
 
 
-static struct azra_hook azra_helph = 
+static struct aura_hook aura_helph = 
 {
-	.func = l_azra_help,
-	.name = "azra_hooks",
+	.func = l_aura_help,
+	.name = "aura_hooks",
 	.help = "Get a list of exported C hooks"
 };
 
 
-void azra_func_init(lua_State* L)
+void aura_func_init(lua_State* L)
 {
-	printf("azra: Intializing lua subsystem\n");
-	base = &azra_helph;
+	printf("aura: Intializing lua subsystem\n");
+	base = &aura_helph;
 	end = base;
 	lua_register(L,base->name,base->func);
-	printf("azra: subsystem ready\n");
+	printf("aura: subsystem ready\n");
 }

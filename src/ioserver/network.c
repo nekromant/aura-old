@@ -15,7 +15,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <string.h>
-#include <azra/azra.h>
+#include <aura/aura.h>
 
 /* IO hack. This replaces the io library's idea of stdin/out/err
  * with 3 new FILE* handles, without altering the C stdin/out/err
@@ -26,7 +26,7 @@
  * versions...
  */
 static void hackio(lua_State *L, FILE *in, FILE *out, FILE *err) {
-	printf("azra: Hi-jacking lua io streams...\n");
+	printf("aura: Hi-jacking lua io streams...\n");
 	FILE **pf;
 	lua_getglobal(L, "io"); /* Get the IO library */
 	lua_pushstring(L, "open");
@@ -62,16 +62,16 @@ void error(const char *msg)
 
 static int handle_server_io(struct epoll_event *ev)
 {
-	struct azra_epoll_hook *shook = (struct azra_epoll_hook*) ev->data.ptr;
- 	struct azra_server_data *sdata = shook->data;
-	printf("azra: accepting connection to '%s'\n", shook->name);
- 	struct azra_epoll_hook *sh = malloc(sizeof(struct azra_epoll_hook));
-	struct azra_client_data *cdata = calloc(1,sizeof(struct azra_client_data));
+	struct aura_epoll_hook *shook = (struct aura_epoll_hook*) ev->data.ptr;
+ 	struct aura_server_data *sdata = shook->data;
+	printf("aura: accepting connection to '%s'\n", shook->name);
+ 	struct aura_epoll_hook *sh = malloc(sizeof(struct aura_epoll_hook));
+	struct aura_client_data *cdata = calloc(1,sizeof(struct aura_client_data));
 	cdata->clilen = sizeof(struct sockaddr_in);
  	sh->fd = accept(shook->fd, (struct sockaddr *) &cdata->cli_addr, &cdata->clilen);
  	if (sh->fd < 0)
 	{
-		perror("azra: Failed to accept incoming connection\n");
+		perror("aura: Failed to accept incoming connection\n");
 		goto accept_fail;
 	}
 	char *ip = inet_ntoa(cdata->cli_addr.sin_addr);
@@ -83,7 +83,7 @@ static int handle_server_io(struct epoll_event *ev)
 	sh->data = cdata;
 	cdata->h = sh;
 	
-	return azra_setup_client(sh);
+	return aura_setup_client(sh);
 	//TODO: Proper error handling
 	//
 accept_fail:
@@ -93,11 +93,11 @@ accept_fail:
 
 
 
-int azra_server_init(lua_State *L, char *host, int portno)
+int aura_server_init(lua_State *L, char *host, int portno)
 {
 	int i,err;
-	struct azra_epoll_hook *shook = malloc(sizeof(struct azra_epoll_hook));
-	struct azra_server_data *sdata = malloc(sizeof(struct azra_server_data));
+	struct aura_epoll_hook *shook = malloc(sizeof(struct aura_epoll_hook));
+	struct aura_server_data *sdata = malloc(sizeof(struct aura_server_data));
 	char* name = malloc(128);
 	sprintf(name,"server %s:%d",host,portno);
 	shook->name = name;
@@ -120,7 +120,7 @@ int azra_server_init(lua_State *L, char *host, int portno)
 	i=5;
 	while (i--)
 	{
-		printf("azra: using port %d\n",portno);
+		printf("aura: using port %d\n",portno);
 		sdata->serv_addr.sin_port = htons(portno);
 		err = bind(shook->fd, (struct sockaddr *) &sdata->serv_addr,
 			sizeof(struct sockaddr));
@@ -131,8 +131,8 @@ int azra_server_init(lua_State *L, char *host, int portno)
 	//TODO: Proper error handling and memory mgr
 	if (err!=0) return err;
 	listen(shook->fd,5);
-	azra_make_fd_nonblock(shook->fd);
-	azra_add_epollhook(shook);
+	aura_make_fd_nonblock(shook->fd);
+	aura_add_epollhook(shook);
 	//TODO: Move this. Somewhere
 	sdata->lua_stream = open_memstream (&sdata->lua_iodata, &sdata->lua_streamsz);
 // 	setbuf(sdata->lua_stream,4096);
@@ -202,7 +202,7 @@ static char * smart_fgets(FILE* nio)
 		printf("%hhx ", buff[i]);
 #endif		
 	if (strchr(buff,0x18))
-		buff = "azra_reconf();";
+		buff = "aura_reconf();";
 	if (strchr(buff,0xfd))
 		buff = "-- logout";
 	printf("==> %s\n",buff);
@@ -270,7 +270,7 @@ int network_init(lua_State* l, char* host, int portno)
 				break;
 			}else if (is_cmd("-- shutdown")) 
 			{
-				fprintf(newio,"-- Shutting down azra daemon\n\r");
+				fprintf(newio,"-- Shutting down aura daemon\n\r");
 				fclose(newio);
 				close(newsockfd);
 				close(sockfd);
@@ -286,7 +286,7 @@ int network_init(lua_State* l, char* host, int portno)
 				fprintf(newio, "%s\n\r", lua_tostring(l, -1));
 				lua_pop(l, 1);
 			}
-			fprintf(newio,"azra# ");
+			fprintf(newio,"aura# ");
 			fflush(stdout);
 			buff = smart_fgets(newio);
 		} while (buff);

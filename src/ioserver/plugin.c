@@ -20,7 +20,7 @@
 #include <dlfcn.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
-#include <azra/azra.h>
+#include <aura/aura.h>
 
 
 int l_plugin_load(lua_State* L) 
@@ -31,16 +31,16 @@ int l_plugin_load(lua_State* L)
 		return 0;
 	const char* plugin = lua_tostring(L,1);
 	if (0 != access(plugin, R_OK)) {
-		//printf("azra: Can't access plugin: %s\n", plugin);
+		//printf("aura: Can't access plugin: %s\n", plugin);
 		return 0;
 	}
 	void* handle = dlopen(plugin, RTLD_LAZY|RTLD_GLOBAL);
 	if (!handle) {
-		printf("azra: Failed to load plugin: %s\n", dlerror());
+		printf("aura: Failed to load plugin: %s\n", dlerror());
 		return 0;
 	}
 	dlerror();
-	int (*plugin_init)(lua_State* L) = dlsym(handle, "azra_plugin_init");
+	int (*plugin_init)(lua_State* L) = dlsym(handle, "aura_plugin_init");
 	if ((error = dlerror()) != NULL)  {
 		fprintf(stderr, "%s\n", error);
 		return 0;
@@ -50,18 +50,18 @@ int l_plugin_load(lua_State* L)
 }
 
 
-static struct azra_hook azra_pload = 
+static struct aura_hook aura_pload = 
 {
 	.func = l_plugin_load,
-	.name = "do_azra_load_plugin",
+	.name = "do_aura_load_plugin",
 	.help = "Load a binary plugin",
 	.args = "path"
 };
 
 
-void azra_pluginloader_init(lua_State* L) 
+void aura_pluginloader_init(lua_State* L) 
 {
 	/* Make symbols from core avaliable for libs */
 	dlopen(0 , RTLD_NOW | RTLD_GLOBAL);
-	azra_func_reg(L,&azra_pload);
+	aura_func_reg(L,&aura_pload);
 }

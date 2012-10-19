@@ -11,8 +11,8 @@
 #include <lauxlib.h>
 #include <termios.h>
 #include <string.h>
-#include <azra/azra.h>
-#include <azra/urpc.h>
+#include <aura/aura.h>
+#include <aura/urpc.h>
 
 
 
@@ -105,7 +105,7 @@ static struct urpc_transport ntrans = {
 	.discovery = urpc_null_discovery,
 };
 
-int azra_plugin_init(lua_State* L) 
+int aura_plugin_init(lua_State* L) 
 {
 	urpc_register_transport(L,&ntrans);
 	printf("urpc-null: uRPC 'NULL' transport\n");
