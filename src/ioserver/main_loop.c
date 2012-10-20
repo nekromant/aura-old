@@ -106,7 +106,7 @@ void inline aura_loop_once(lua_State* L)
 	c = epoll_wait(efd, &ev, 1, wait_interval);
 	if (c) {
 		hook = ev.data.ptr;
-		printf("aura: event from %s \n", hook->name);
+		//	printf("aura: event from %s \n", hook->name);
 		hook->io_handler(&ev);
 	}	
 }

@@ -54,7 +54,6 @@ fail:
 
 int aura_async_xfer_handler(struct epoll_event *ev)
 {
-	DBG("Handling async io...");
 	struct aura_epoll_hook *h = ev->data.ptr;
 	struct aura_async_xfer *x = h->data;
 	struct aura_chunk_queue *q;

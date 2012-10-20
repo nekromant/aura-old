@@ -66,24 +66,22 @@ static int urpc_null_call(lua_State* L, struct  urpc_instance* inst, int id)
 	return 0;
 }
 
-static struct urpc_object sobj = {
+static struct urpc_object o1 = {
 	.flags = FLAG_METHOD,
 	.name = "hostname",
 	.reply ="s;"
 };
 
-static struct urpc_object nullobjs = {
+static struct urpc_object o2 = {
 	.flags = FLAG_METHOD,
 	.name = "packnumbers",
 	.args = "1d;2d;1u;2u;",
-	.next = &sobj
 };
 
-static struct urpc_object nullobjs2 = {
+static struct urpc_object o3 = {
 	.flags = FLAG_METHOD,
 	.name = "unpacknumbers",
 	.reply = "1d;2d;1u;2u;",
-	.next = &nullobjs
 };
 
 
@@ -93,7 +91,10 @@ static struct urpc_object nullobjs2 = {
 
 static int urpc_null_discovery(lua_State* L, struct urpc_instance* inst)
 {	
-	inst->head = &nullobjs2;
+	list_add_tail(&o1.list, &inst->objlist);
+	list_add_tail(&o2.list, &inst->objlist);
+	list_add_tail(&o3.list, &inst->objlist);
+
 	return 3;
 }
 

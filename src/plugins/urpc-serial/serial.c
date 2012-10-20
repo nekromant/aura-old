@@ -20,16 +20,23 @@
 #define COMPONENT "urpc-serial"
 #include <aura/debug.h>
 
+/* Notes: current serial io implementation sucks, is hacky and 
+ * overcomplicated in places. 
+ * It should be updated and cleaned up.
+ */
 
 struct serialinstance {
 	struct uart_settings_t* us;
 	struct aura_epoll_hook hook;
 	struct aura_async_xfer *xfer;
+	struct urpc_object * objects;
+	struct urpc_instance* inst;
 	int swap;
 	int id_sz; /* size of id   field */
 	int sz_sz; /* size of size field */
-	int rxstate;
-        int state;
+	int rxstate; /* Receiving state-machine */
+        int state; /* discovery/normal op flag */
+	int objcount; /* discovered object count */
 };
 
 
@@ -39,10 +46,6 @@ struct serialinstance {
 #define STATE_GET_BODY   2
 #define STATE_DISCOVERY  3
 
-/* Packet is method call */ 
-#define FLAG_URPC_METHOD       1
-/* Packet is event data */
-#define FLAG_URPC_EVENT        2
 
 #define STATE(m) (m & 0x0f) 
 
@@ -76,13 +79,15 @@ static char* next_string(char* s)
 }
 
 int urpc_xfer_handler_packets(struct aura_async_xfer *x) {
-	DBG("Handling object descriptors");
 	struct serialinstance *nl = x->data;
 	int n, i;
 	char* s;
+	int id;
+	struct urpc_object *o; 
 	switch (nl->rxstate)
 	{
 	case STATE_WAIT_START:
+		DBG("SYNC?");
 		if (*x->recv->data != MAGIC_START ) {
 			aura_async_xfer_reset_receiver(x);
 			x->expect_bytes=1;		
@@ -93,23 +98,51 @@ int urpc_xfer_handler_packets(struct aura_async_xfer *x) {
 		return 0;
 	case STATE_GET_LEN:
 		nl->rxstate = STATE_GET_BODY;
-		n = number_to_int(&x->recv->data[1],nl->sz_sz) + 1;
+		n = number_to_int(&x->recv->data[1],nl->sz_sz);
 		DBG("Expecting %d bytes in packet body", n);
-		aura_async_expect_bytes(x, n);
+		aura_async_expect_bytes(x, n+1);
 		break;
-	case STATE_GET_BODY:
+	case STATE_GET_BODY:		
+		if (nl->state) {
+			/* Events and responses */
+		} else
+		{
+			/* All the discovery stuff */
+			/* TODO: check csum */
+			DBG("data @ %d", 1 + nl->sz_sz );
+			n = number_to_int(&x->recv->data[1], nl->sz_sz);
+			if (n == 1) {
+				nl->rxstate++;
+				goto next_packet; /* Last one */
+			}
+			s = &x->recv->data[ 1 + nl->sz_sz ];
+#if 0			
+			for (i=0; i < x->recv->size; i++ ) {
+				DBG(" %hhx | %c ", s[i], s[i]);
+			}
+#endif
+			o = malloc(sizeof(struct urpc_object));
+			o->flags = *s++;
+			id = number_to_int(s, 1);
+			*s++;
+			DBG("ID# %d", id);
+			o->name = strdup(s);
+			s = next_string(s);
+			o->args = strdup(s);
+			s = next_string(s);
+			o->reply = strdup(s);
+			list_add_tail(&o->list, &nl->inst->objlist);
+			nl->objcount++;
+			DBG("name: %s",  o->name);
+			DBG("args: %s",  o->args);
+			DBG("reply: %s", o->reply);
+		}
+	next_packet:
 		aura_async_xfer_reset_receiver(x);
 		x->expect_bytes=1;
 		nl->rxstate = STATE_WAIT_START;
 		/* Now, let's parse response */
-		s = x->recv->data[1 + nl->sz_sz + nl->id_sz];
-		if (*s & FLAG_URPC_METHOD) 
-		DBG("name %s", s);
-		s = next_string(s);
-		DBG("data %s", s);
-		s = next_string(s);
-		DBG("reply %s", s);
-		break;
+		
 	}
 	return NULL;
 	
@@ -193,9 +226,10 @@ error_parse:
 
 char reply[64] = "(none)" ;
 static int urpc_serial_call(lua_State* L, struct  urpc_instance* inst, int id)
-{	
+{
+	DBG("Running a call to id #%d\n", id);	
 /*
-  printf("urpc-nullt: Running a call to id #%d and dumping packed data\n", id);
+  
   struct urpc_chunk *chunk = urpc_pack_data(L, inst, 256, 0, 
   inst->objects[id]->acache, 0);
   int i;
@@ -236,20 +270,21 @@ static int urpc_serial_discovery(lua_State* L, struct urpc_instance* inst)
 	struct aura_chunk *c = aura_chunk_allocate(ARRAY_SIZE(discovery));
 	memcpy(c->data, discovery, ARRAY_SIZE(discovery));
 	c->size=ARRAY_SIZE(discovery);
+	s->inst=inst;
+	s->objcount=0;
 	aura_async_enqueue_chunk(s->xfer, c);
 	aura_async_expect_bytes(s->xfer, 1);
 	s->rxstate = 0;
 	s->xfer->handle_data = urpc_xfer_handler_discovery_init;
-	inst->head = NULL;
+
 	int loops = 100;
-	s->state = 0;
+	s->rxstate = STATE_WAIT_START;
+	s->state=0;
 	/* Do up to 100 loops and wait for discovery to complete */
 	while (loops-- && (s->state==0))
 	{
 		aura_loop_once(L);
-	}
-		
-	       
+	}      
 	return 0;
 }
 

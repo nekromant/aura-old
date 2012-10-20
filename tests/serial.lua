@@ -6,3 +6,4 @@ end
 
 
 s = urpc_open("serial","/dev/ttyUSB0:19200:8:n:1");
+s.beep(5);

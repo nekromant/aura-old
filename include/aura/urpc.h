@@ -41,14 +41,14 @@ struct urpc_object {
 	void *acache;
 	char *reply;
 	void *rcache;
-	struct urpc_object *next;
+	struct list_head list;
 };	
 
 
 /* represents an instance with object cache */
 struct urpc_instance {
 	struct urpc_transport *transport;
-	struct urpc_object *head;
+	struct list_head objlist; /*struct urpc_object* */
 	struct urpc_object **objects;
 	void *private_data;
 };

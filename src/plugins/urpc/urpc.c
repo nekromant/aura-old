@@ -45,13 +45,16 @@ static int l_urpc_discovery(lua_State *L)
 {
 	struct urpc_instance *i = lua_touserdata(L,1);
 	printf("urpc: Running discovery via '%s' transport\n", i->transport->name);
-	int n =  i->transport->discovery(L,i);
+	int n =  i->transport->discovery(L, i);
 	printf("urpc: Generating cache\n", i->transport->name);
 	i->objects = malloc(sizeof(void*)*n);
 	int j=0;
-	struct urpc_object* h = i->head;
+	struct urpc_object* h; 
+	struct list_head* tmp;
 	lua_newtable(L);
-	while (h) {
+	list_for_each(tmp, &i->objlist)
+	{
+		h = list_entry(tmp, struct urpc_object, list);
 		i->objects[j++]=h;
 		lua_pushnumber(L,j);
 		lua_newtable(L);
@@ -68,7 +71,6 @@ static int l_urpc_discovery(lua_State *L)
 			h->acache = urpc_argcache(L,h->args,0);
 			h->rcache = NULL;
 		}
-		h=h->next;
 	}
 	return 1;
 }
@@ -84,6 +86,7 @@ static int l_urpc_open(lua_State *L)
 	if (private_data) { 
 		inst = malloc(sizeof(struct urpc_instance));
 		inst->private_data = private_data;
+		INIT_LIST_HEAD(&inst->objlist);
 		inst->transport=t;
 		inst->objects=NULL;
 		lua_pushlightuserdata(L,inst);
