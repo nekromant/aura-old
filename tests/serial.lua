@@ -5,4 +5,4 @@ for i,j in pairs(__urpc_transports)do
 end
 
 
-s = urpc_open("serial","/dev/ttyUSB0:115200:8:n:1");
+s = urpc_open("serial","/dev/ttyUSB0:19200:8:n:1");

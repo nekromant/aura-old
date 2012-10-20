@@ -8,9 +8,12 @@ struct aura_chunk_queue {
 
 struct aura_async_xfer {
 	struct list_head transferlist; /* aura_chunk_queue */
-	struct aura_chunk *readbufer;
-	int df;
-	int expect_bytes;
+	int pos; /* position of writer */
+	int expect_bytes;	
+	struct aura_chunk *recv;
+	struct aura_epoll_hook *h;
+	void* data; /* userdata */
+	int (*handle_data)(struct aura_async_xfer* );
 };
 
 
@@ -22,6 +25,11 @@ int aura_async_enqueue_chunk(
 	struct aura_async_xfer* x, 
 	struct aura_chunk* chunk);
 
+#define aura_async_xfer_reset_receiver(x)	\
+	{					\
+		x->recv->size=0;		\
+	}					\
+
 /* Terminate any pending transfers */
 void aura_async_terminate(struct aura_async_xfer* x);
 
@@ -29,5 +37,7 @@ void aura_async_terminate(struct aura_async_xfer* x);
 int aura_async_expect_bytes(struct aura_async_xfer* x, size_t n);
 
 int aura_async_xfer_handler(struct epoll_event* ev);
+
+void aura_async_xfer_set_receiver(struct aura_async_xfer *x, struct aura_chunk *c);
 
 #endif

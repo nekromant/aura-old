@@ -103,7 +103,6 @@ void inline aura_loop_once(lua_State* L)
 	int c;
 	struct epoll_event ev;
 	struct aura_epoll_hook *hook;
-	printf("aura: entering main loop\n");
 	c = epoll_wait(efd, &ev, 1, wait_interval);
 	if (c) {
 		hook = ev.data.ptr;
@@ -114,6 +113,7 @@ void inline aura_loop_once(lua_State* L)
 
 void aura_loop_forever(lua_State* L)
 {
+	printf("aura: entering main loop\n");
 	while (1) {
 		aura_loop_once(L);
 	}
