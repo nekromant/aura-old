@@ -1,6 +1,7 @@
 config = { 
    pluginpaths = {
       "/usr/lib/aura/",
+      "./src/plugins/tcp/.libs/",
       "./src/plugins/dummy/.libs/",
       "./src/plugins/urpc/.libs/",
       "./src/plugins/urpc-null/.libs/",
@@ -9,17 +10,15 @@ config = {
    plugins = {
       "urpc",
       "dummy",
+      "tcp",
       "urpc-null",
       "urpc-serial",
       "urpc-usb"	  
    },
 
-   tcp_server = {
+   tcp = {
       addr = "0.0.0.0",
-      port = 8000
+      port = 8000,
+      password = 'secret'
    },
-
-   urpc = { 
-   payload_sz = 256,
-   }
 }

@@ -29,6 +29,7 @@ AC_CHECK_FUNCS([bzero socket strchr])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
 		 src/plugins/Makefile
+		 src/plugins/tcp/Makefile	
 		 src/plugins/dummy/Makefile	 
 		 src/plugins/urpc/Makefile
 		 src/plugins/urpc-null/Makefile

@@ -12,4 +12,7 @@
 #define DBG(fmt, ...) ;;
 #endif
 
+#define INF(fmt, ...) printf(COMPONENT ": " fmt "\n", ##__VA_ARGS__)
+
+
 #endif
