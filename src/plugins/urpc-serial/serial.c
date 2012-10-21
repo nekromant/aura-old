@@ -37,10 +37,13 @@ struct serialinstance {
 	int rxstate; /* Receiving state-machine */
         int state; /* discovery/normal op flag */
 	int objcount; /* discovered object count */
+	lua_State *L;
 };
 
 
 #define MAGIC_START '['
+#define MAGIC_STOP  ']'
+
 #define STATE_WAIT_START 0
 #define STATE_GET_LEN    1
 #define STATE_GET_BODY   2
@@ -49,7 +52,7 @@ struct serialinstance {
 
 #define STATE(m) (m & 0x0f) 
 
-unsigned int number_to_int(void* data, int n) 
+unsigned static int number_to_int(void* data, int n) 
 {
 	uint8_t* n8;
 	uint16_t* n16;
@@ -78,7 +81,27 @@ static char* next_string(char* s)
 	return s;
 }
 
-int urpc_xfer_handler_packets(struct aura_async_xfer *x) {
+
+static unsigned char csum(unsigned char* data, size_t len) {
+	unsigned char csum=0;
+	while (len--)
+		csum+=data[len];
+	return csum;
+}
+
+
+void dump_chunk(struct aura_chunk* c) 
+{
+	int i;
+	for (i=0; i < c->size; i++ ) {
+		if ((i % 8) == 0)
+			printf("\n");
+		printf(" %hhx ", c->data[i]);
+	}
+	printf("\n");
+}
+int urpc_xfer_handler_packets(struct aura_async_xfer *x) 
+{
 	struct serialinstance *nl = x->data;
 	int n, i;
 	char* s;
@@ -100,37 +123,36 @@ int urpc_xfer_handler_packets(struct aura_async_xfer *x) {
 		nl->rxstate = STATE_GET_BODY;
 		n = number_to_int(&x->recv->data[1],nl->sz_sz);
 		DBG("Expecting %d bytes in packet body", n);
-		aura_async_expect_bytes(x, n+1);
+		aura_async_expect_bytes(x, n);
 		break;
-	case STATE_GET_BODY:		
+	case STATE_GET_BODY:	
+                /* TODO: check csum */	
 		if (nl->state) {
 			/* Events and responses */
+			nl->state++;
+			goto next_packet; /* Last one */
 		} else
 		{
 			/* All the discovery stuff */
-			/* TODO: check csum */
-			DBG("data @ %d", 1 + nl->sz_sz );
 			n = number_to_int(&x->recv->data[1], nl->sz_sz);
 			if (n == 1) {
-				nl->rxstate++;
+				nl->state++;
 				goto next_packet; /* Last one */
 			}
 			s = &x->recv->data[ 1 + nl->sz_sz ];
-#if 0			
-			for (i=0; i < x->recv->size; i++ ) {
-				DBG(" %hhx | %c ", s[i], s[i]);
-			}
-#endif
 			o = malloc(sizeof(struct urpc_object));
+			o->name = NULL;
+			o->args = NULL;
+			o->reply = NULL;
 			o->flags = *s++;
 			id = number_to_int(s, 1);
 			*s++;
 			DBG("ID# %d", id);
-			o->name = strdup(s);
+			if (strlen(s)) o->name = strdup(s);
 			s = next_string(s);
-			o->args = strdup(s);
+			if (strlen(s)) o->args = strdup(s);
 			s = next_string(s);
-			o->reply = strdup(s);
+			if (strlen(s)) o->reply = strdup(s);
 			list_add_tail(&o->list, &nl->inst->objlist);
 			nl->objcount++;
 			DBG("name: %s",  o->name);
@@ -198,6 +220,7 @@ static void* urpc_serial_open(lua_State* L)
 	}
 	const char *settings = lua_tostring(L,2);
 	struct serialinstance* nl = malloc(sizeof(struct serialinstance));
+	nl->L = L;
 	if (!nl)
 		return 0;
 	printf("urpc-serial: opening serial: %s\n", settings);
@@ -224,36 +247,34 @@ error_parse:
 	return 0;
 }
 
+/* FIXME: Only 1-byte sizes and ids are supported */
 char reply[64] = "(none)" ;
 static int urpc_serial_call(lua_State* L, struct  urpc_instance* inst, int id)
 {
 	DBG("Running a call to id #%d\n", id);	
-/*
-  
-  struct urpc_chunk *chunk = urpc_pack_data(L, inst, 256, 0, 
-  inst->objects[id]->acache, 0);
-  int i;
-  if (!chunk) {
-  printf("WTF?\n");
-  return 0;
-  }
-  gethostname(reply, 64);
-  struct nullinstance *prv = URPC_INSTANCE_PRIVATE(inst);
-  printf("\nurpc-nullt: %s", prv->tag);
-  for (i=0; i<chunk->size; i++) {
-  if ((i % 8) == 0)
-  printf("\nurpc-nullt: ");
-  printf(" 0x%2hhx ", chunk->data[i]);
-  }
-  urpc_chunk_free(chunk);
-  printf("\nurpc-nullt: ----------\n");
-  if (inst->objects[id]->reply){
-  int n = urpc_unpack_data(L, reply,
-  inst->objects[id]->rcache, 0);
-  return n;
-		
-  }
-*/
+	struct serialinstance *s = URPC_INSTANCE_PRIVATE(inst);
+	int offset = 1 + s->sz_sz + s->id_sz;
+	struct aura_chunk *chunk = urpc_pack_data(L, inst, 256, offset, 
+						  inst->objects[id]->acache, 0);
+	if (!chunk)
+		return 0;
+	chunk->data[0]=MAGIC_START;
+	chunk->data[1]=chunk->size-1;
+	chunk->data[2]=id;
+	chunk->data[chunk->size] = csum(&chunk->data[1],chunk->size-1);
+	chunk->size++;
+	chunk->data[chunk->size++] = MAGIC_STOP;
+	dump_chunk(chunk);
+	aura_async_enqueue_chunk(s->xfer, chunk);
+	
+	/* If we need a reply, loop  until the call is complete */
+	if (inst->objects[id]->reply) {
+		DBG("Waiting for reply");
+		s->state = 0;
+		while ((s->state==0))
+			aura_loop_once(L);
+	}
+
 	return 0;
 }
 
@@ -276,16 +297,14 @@ static int urpc_serial_discovery(lua_State* L, struct urpc_instance* inst)
 	aura_async_expect_bytes(s->xfer, 1);
 	s->rxstate = 0;
 	s->xfer->handle_data = urpc_xfer_handler_discovery_init;
-
-	int loops = 100;
+	int loops = 1000;
 	s->rxstate = STATE_WAIT_START;
 	s->state=0;
-	/* Do up to 100 loops and wait for discovery to complete */
-	while (loops-- && (s->state==0))
-	{
+	/* Loop until discovery is complete */
+	while ((s->state==0))
 		aura_loop_once(L);
-	}      
-	return 0;
+	
+	return s->objcount;
 }
 
 

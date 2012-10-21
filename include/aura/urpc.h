@@ -32,6 +32,30 @@
 	 ((((UInt64)value)>>40) & 0x000000000000FF00ULL)  |	\
 	 ((((UInt64)value)>>56) & 0x00000000000000FFULL))
 
+
+
+union u32 {
+	uint32_t n;
+	char bytes[4];
+};
+
+union s32 {
+	int32_t n;
+	char bytes[4];
+};
+
+
+union u16 {
+	uint16_t n;
+	char bytes[2];
+};
+
+union s16 {
+	int16_t n;
+	char bytes[2];
+};
+
+
 /* represents individual methods and events from an instance */
 struct urpc_object {
 	unsigned int id;

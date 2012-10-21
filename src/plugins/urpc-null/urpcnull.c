@@ -85,8 +85,8 @@ static struct urpc_object o3 = {
 };
 
 
-/* Should return the count of discovered objects and set the head
- * to the very first in the linked list 
+/* Should return the count of discovered objects and add all objects 
+ * to the linked list
  */
 
 static int urpc_null_discovery(lua_State* L, struct urpc_instance* inst)
@@ -94,7 +94,6 @@ static int urpc_null_discovery(lua_State* L, struct urpc_instance* inst)
 	list_add_tail(&o1.list, &inst->objlist);
 	list_add_tail(&o2.list, &inst->objlist);
 	list_add_tail(&o3.list, &inst->objlist);
-
 	return 3;
 }
 

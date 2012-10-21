@@ -13,6 +13,8 @@
 #include <aura/aura.h>
 #include <aura/urpc.h>
 
+
+
 /* This features a very curious parser to optimize the pack/unpack
  * times. To avoid tokenizing the string each time, we build an array of
  * pointers to pack/unpack functions, that serves as a dumb cache.
@@ -98,15 +100,6 @@ int urpc_unpack_s8(lua_State *L, char* src, int swap)
 	return 1;
 }
 
-union u16 {
-	uint16_t n;
-	char bytes[2];
-};
-
-union s16 {
-	int16_t n;
-	char bytes[2];
-};
 
 int urpc_pack_u16(lua_State *L, int n, char* dest, int destsz, int swap)
 {
@@ -167,16 +160,6 @@ int urpc_unpack_u16(lua_State *L, uint16_t* src, int swap)
 }
 
 
-
-union u32 {
-	uint32_t n;
-	char bytes[4];
-};
-
-union s32 {
-	int32_t n;
-	char bytes[4];
-};
 
 
 int urpc_pack_u32(lua_State *L, int n, char* dest, int destsz, int swap)
